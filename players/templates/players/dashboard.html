@@ -1,0 +1,207 @@
+  {% extends 'base.html' %}
+  {% load static %}
+
+  {% block content %}
+  <div class="container mt-4">
+    <div class="row g-4">
+      
+      <!-- Left Column: Profile Summary -->
+      <div class="col-lg-3">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
+          <div class="card-body text-center">
+            <!-- Profile picture -->
+            {% if request.user.profile_picture %}
+              <img src="{{ request.user.profile_picture.url }}" 
+                  class="rounded-circle shadow-sm mb-3" 
+                  width="100" height="100" alt="Profile Picture">
+            {% else %}
+              <img src="{% static 'img/default-avatar.png' %}" 
+                  class="rounded-circle shadow-sm mb-3" 
+                  width="100" height="100" alt="Default Avatar">
+            {% endif %}
+
+            <!-- Username / role -->
+            <h5 class="fw-bold">{{ user.username }}</h5>
+            <p class="text-muted small mb-2">{{ user.email }}</p>
+            <span class="badge bg-primary text-capitalize mb-3">{{ user.role }}</span>
+
+            <!-- Followers / Following -->
+            <div class="d-flex justify-content-between my-3">
+              <a href="{% url 'followers_list' user.id %}" 
+                class="text-decoration-none text-dark w-50 me-1 text-center hover-shadow p-2 rounded border">
+                <h6 class="mb-0">{{ user.followers.count }}</h6>
+                <small class="text-muted">Followers</small>
+              </a>
+              <a href="{% url 'following_list' user.id %}" 
+                class="text-decoration-none text-dark w-50 ms-1 text-center hover-shadow p-2 rounded border">
+                <h6 class="mb-0">{{ user.following.count }}</h6>
+                <small class="text-muted">Following</small>
+              </a>
+            </div>
+
+            <!-- Mini profile summary -->
+            {% if user.player_profile %}
+              {% comment %} <div class="text-start small mt-3">
+                <div><strong>Position:</strong> {{ user.player_profile.position|default:"—" }}</div>
+                <div><strong>Club:</strong> {{ user.player_profile.current_club|default:"—" }}</div>
+                <div><strong>Height:</strong> 
+                  {% if user.player_profile.height_cm %}{{ user.player_profile.height_cm }} cm{% else %}—{% endif %}
+                </div>
+                <div><strong>Foot:</strong> {{ user.player_profile.preferred_foot|capfirst|default:"—" }}</div>
+              </div> {% endcomment %}
+              <a href="{% url 'view_profile' user.id %}" 
+                class="btn btn-outline-primary btn-sm w-100 mt-3">👤 View Full Profile</a>
+            {% else %}
+              <p class="text-muted small mt-3">No player profile created yet.</p>
+              <a href="{% url 'update_profile' %}" 
+                class="btn btn-outline-primary btn-sm w-100">+ Create Profile</a>
+            {% endif %}
+
+            <!-- Stats -->
+            {% if user.role == "player" or user.role == "scout" or user.role == "club" %}
+              <a href="{% url 'view_profile' user.id %}#stats" 
+                class="btn btn-outline-secondary btn-sm w-100 mt-2">📊 View Stats</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Column: AJAX Feed -->
+      <div class="col-lg-6">
+        {% include "posts/feeds.html" with form=form posts=posts %}
+      </div>
+
+      <!-- Right Column: Suggestions / Trends / Recommended -->
+      <div class="col-lg-3">
+
+        <!-- Scouts Following You -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">👀 Scouts Following You</h6>
+            <ul class="list-unstyled">
+              {% for scout in scouts_following %}
+              <li class="mb-2 d-flex align-items-center">
+                <img src="{% if scout.profile_picture %}{{ scout.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                    class="rounded-circle me-2" width="35" height="35">
+                <span>{{ scout.username }}</span>
+              </li>
+              {% empty %}
+              <li class="text-muted small">No scouts yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Trending Players -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">🔥 Trending Players</h6>
+            <ul class="list-unstyled small">
+              {% for player in trending_players %}
+                <li class="mb-2">⚡ {{ player.username }} – {{ player.stats_summary }}</li>
+              {% empty %}
+                <li class="text-muted small">No trending players yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Recommended Users to Follow -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">🌟 Recommended to Follow</h6>
+            <ul class="list-unstyled">
+              {% for rec_user in recommended_users %}
+              <li class="mb-2 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <img src="{% if rec_user.profile_picture %}{{ rec_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                      class="rounded-circle me-2" width="35" height="35">
+                  <span>{{ rec_user.username }} ({{ rec_user.role|title }})</span>
+                </div>
+                <button 
+                  class="btn btn-sm btn-primary follow-btn"
+                  data-url="{% url 'follow_user' rec_user.id %}">
+                  {% if rec_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
+                </button>
+              </li>
+              {% empty %}
+              <li class="text-muted small">No recommendations yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Search Users -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">🔍 Search Users</h6>
+            <form method="get">
+              <div class="input-group mb-2">
+                <input type="text" name="q" class="form-control" placeholder="Search by username or role" value="{{ search_query }}">
+                <button class="btn btn-primary" type="submit">Search</button>
+              </div>
+            </form>
+            {% if search_results %}
+            <ul class="list-unstyled">
+              {% for search_user in search_results %}
+              <li class="mb-2 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <img src="{% if search_user.profile_picture %}{{ search_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                      class="rounded-circle me-2" width="35" height="35">
+                  <span>{{ search_user.username }} ({{ search_user.role|title }})</span>
+                </div>
+                <button 
+                  class="btn btn-sm btn-primary follow-btn"
+                  data-url="{% url 'follow_user' search_user.id %}">
+                  {% if search_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
+                </button>
+              </li>
+              {% endfor %}
+            </ul>
+            {% elif search_query %}
+            <p class="text-muted small">No users found.</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+  .hover-shadow:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: 0.3s;
+  }
+  </style>
+
+  <!-- AJAX Script for Follow/Unfollow -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".follow-btn").forEach(button => {
+          button.addEventListener("click", function(e) {
+              e.preventDefault();
+              const url = this.dataset.url;
+              const btn = this;
+
+              fetch(url, {
+                  method: "POST",
+                  headers: {
+                      "X-Requested-With": "XMLHttpRequest",
+                      "X-CSRFToken": "{{ csrf_token }}"
+                  }
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.action) {
+                      btn.textContent = data.action === "followed" ? "Unfollow" : "Follow";
+                  }
+              })
+              .catch(error => console.error("Error:", error));
+          });
+      });
+  });
+  </script>
+
+  {% endblock %}

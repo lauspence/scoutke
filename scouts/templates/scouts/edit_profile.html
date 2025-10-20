@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Profile Header -->
+  <div class="card shadow-sm mb-4 p-3 d-flex flex-row align-items-center">
+    {% if request.user.profile_picture %}
+      <img src="{{ request.user.profile_picture.url }}" 
+           class="rounded-circle me-3" width="100" height="100" alt="{{ request.user.username }}">
+    {% else %}
+      <img src="{% static 'img/default-avatar.png' %}" 
+           class="rounded-circle me-3" width="100" height="100" alt="Default Avatar">
+    {% endif %}
+    
+    <div>
+      <h4>{{ request.user.username }}</h4>
+      <p class="text-muted mb-1">{{ request.user.bio|default:"No bio yet." }}</p>
+      <small class="text-muted">{{ request.user.followers.count }} Followers • {{ request.user.following.count }} Following</small>
+    </div>
+    <div class="ms-auto">
+      <a href="#" class="btn btn-primary btn-sm">Edit Profile</a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">Media</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="reposts-tab" data-bs-toggle="tab" data-bs-target="#reposts" type="button" role="tab">Reposts</button>
+    </li>
+  </ul>
+
+  <!-- Tabs Content -->
+  <div class="tab-content">
+    
+    <!-- Overview -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+      <div class="card shadow-sm p-3">
+        <h5>Edit Profile</h5>
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-success">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Media -->
+    <div class="tab-pane fade" id="media" role="tabpanel">
+      <div class="row g-3">
+        {% if media_posts %}
+          {% for post in media_posts %}
+            <div class="col-12 col-md-6">
+              <div class="card shadow-sm">
+                {% if post.video %}
+                  <div class="ratio ratio-16x9">
+                    <video controls>
+                      <source src="{{ post.video.url }}" type="video/mp4">
+                    </video>
+                  </div>
+                {% elif post.image %}
+                  <img src="{{ post.image.url }}" class="img-fluid rounded" alt="Media">
+                {% endif %}
+                <div class="card-body">
+                  <p class="text-muted small">{{ post.content|truncatechars:100 }}</p>
+                  <small class="text-muted">{{ post.time_since }}</small>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">No media uploaded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Reposts -->
+    <div class="tab-pane fade" id="reposts" role="tabpanel">
+      <div class="row g-3">
+        {% if reposts %}
+          {% for post in reposts %}
+            <div class="col-12">
+              <div class="card shadow-sm p-2">
+                <div class="d-flex align-items-center mb-2">
+                  {% if post.original_post.author.profile_picture %}
+                    <img src="{{ post.original_post.author.profile_picture.url }}" 
+                         class="rounded-circle me-2" width="50" height="50" alt="{{ post.original_post.author.username }}">
+                  {% else %}
+                    <img src="{% static 'img/default-avatar.png' %}" 
+                         class="rounded-circle me-2" width="50" height="50" alt="Default Avatar">
+                  {% endif %}
+                  <div>
+                    <strong>{{ post.original_post.author.username }}</strong>
+                    <small class="text-muted">{{ post.original_post.time_since }}</small>
+                  </div>
+                </div>
+                <p>{{ post.content|truncatechars:150 }}</p>
+                {% if post.original_post.video %}
+                  <div class="ratio ratio-16x9 mb-2">
+                    <video controls>
+                      <source src="{{ post.original_post.video.url }}" type="video/mp4">
+                    </video>
+                  </div>
+                {% elif post.original_post.image %}
+                  <img src="{{ post.original_post.image.url }}" class="img-fluid rounded mb-2">
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">No reposts yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

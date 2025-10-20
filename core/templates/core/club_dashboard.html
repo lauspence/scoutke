@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Top Section -->
+  <div class="card shadow border-0 mb-4">
+    <div class="card-body">
+      <h2>🏟️ Club Dashboard</h2>
+      <p class="text-muted">Welcome {{ request.user.username }}! Manage recruitment and scout reports here.</p>
+
+      <!-- Quick Actions -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body text-center">
+              <h5>📋 Recruitment Requests</h5>
+              <p>Review and approve scouts’ player recommendations.</p>
+              <a href="#" class="btn btn-primary btn-sm">View Requests</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body text-center">
+              <h5>⚽ Player Database</h5>
+              <p>Browse all players and track their performance.</p>
+              <a href="#" class="btn btn-success btn-sm">Browse Players</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scout Reports Feed -->
+  <div class="card shadow border-0">
+    <div class="card-body">
+      <h5 class="mb-3">📢 Latest Scout Reports</h5>
+      <p class="text-muted small">See what scouts are saying about potential signings.</p>
+
+      <!-- Example Report 1 -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <img src="{% static 'img/default-avatar.png' %}" 
+                 class="rounded-circle me-2" width="40" height="40" alt="Scout">
+            <div>
+              <strong>ScoutMark22</strong> 
+              <div class="text-muted small">Midfield Specialist • Nairobi</div>
+            </div>
+          </div>
+          <p>💡 Recommended <strong>John Doe</strong> (Striker, 19 yrs) — fast, clinical finisher with excellent positioning.</p>
+          
+          <!-- Action buttons -->
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-success">✅ Approve</button>
+            <button class="btn btn-sm btn-danger">❌ Reject</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example Report 2 -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <img src="{% static 'img/default-avatar.png' %}" 
+                 class="rounded-circle me-2" width="40" height="40" alt="Scout">
+            <div>
+              <strong>TalentFinderKE</strong> 
+              <div class="text-muted small">Forward Scout • Mombasa</div>
+            </div>
+          </div>
+          <p>🔥 Suggested <strong>Ali Yusuf</strong> (Winger, 21 yrs) — quick dribbler, strong left foot, consistent assists.</p>
+          
+          <!-- Action buttons -->
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-success">✅ Approve</button>
+            <button class="btn btn-sm btn-danger">❌ Reject</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

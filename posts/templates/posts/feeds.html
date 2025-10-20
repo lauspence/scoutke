@@ -1,0 +1,196 @@
+{% load static %}
+{% load humanize %}
+
+<!-- Post Box -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" id="post-form">
+      {% csrf_token %}
+      {{ form.content }}
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <div class="d-flex gap-2">
+          <label class="btn btn-light btn-sm border">
+            📷 <input type="file" name="image" hidden>
+          </label>
+          <label class="btn btn-light btn-sm border">
+            🎥 <input type="file" name="video" hidden>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">🚀 Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Posts List -->
+<div id="posts-container">
+{% for post in posts %}
+<div class="card shadow-sm border-0 mb-4 mt-3" id="post-{{ post.id }}">
+  <div class="card-body">
+    <!-- Post Header -->
+    <div class="d-flex align-items-center mb-3">
+      <img src="{% if post.author.profile_picture %}{{ post.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+           class="rounded-circle me-2" width="40" height="40" alt="{{ post.author.username }}">
+      <div>
+        <h6 class="mb-0">{{ post.author.username }}</h6>
+        <small class="text-muted">{{ post.time_since }} • {{ post.author.role|title }}</small>
+      </div>
+    </div>
+
+    <!-- Post Content -->
+    {% if post.content %}
+      <p>{{ post.content }}</p>
+    {% endif %}
+
+    <!-- Post Image -->
+    {% if post.image %}
+      <div class="post-image-wrapper mb-3">
+        <img src="{{ post.image.url }}" class="post-image" alt="Post Image">
+      </div>
+    {% endif %}
+
+    <!-- Post Video -->
+    {% if post.video %}
+      <div class="ratio ratio-16x9 mb-3">
+        <video class="w-100 rounded" controls>
+          <source src="{{ post.video.url }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    {% endif %}
+
+    <!-- Post Actions -->
+    <div class="d-flex justify-content-between text-muted border-top pt-2">
+      <a href="#" class="text-decoration-none like-btn" data-id="{{ post.id }}">
+        👍 Like (<span id="likes-count-{{ post.id }}">{{ post.total_likes }}</span>)
+      </a>
+      <a class="text-decoration-none" data-bs-toggle="collapse" href="#comments-{{ post.id }}">
+        💬 Comment (<span id="comments-count-{{ post.id }}">{{ post.comments.count }}</span>)
+      </a>
+    </div>
+
+    <!-- Comment Form & List -->
+    <div class="collapse mt-2" id="comments-{{ post.id }}">
+      <form method="post" class="comment-form" data-id="{{ post.id }}">
+        {% csrf_token %}
+        {{ comment_form.content }}
+        <button type="submit" class="btn btn-sm btn-primary mt-1">Post</button>
+      </form>
+
+      <ul class="list-unstyled mt-2" id="comments-list-{{ post.id }}">
+        {% for comment in post.comments.all %}
+          <li><strong>{{ comment.author.username }}:</strong> {{ comment.content }}</li>
+        {% empty %}
+          <li class="text-muted small">No comments yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% empty %}
+<p class="text-center text-muted mt-4">No posts to show yet.</p>
+{% endfor %}
+</div>
+
+<!-- Styles for Insta/Twitter look -->
+<style>
+.post-image-wrapper {
+  width: 100%;
+  max-height: 500px;        /* Prevents overly tall images */
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+.post-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* Ensures Instagram-like crop */
+  display: block;
+}
+</style>
+
+<!-- AJAX Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // CSRF setup
+  function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let cookie of cookies) {
+              cookie = cookie.trim();
+              if (cookie.startsWith(name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // Like buttons
+  document.querySelectorAll(".like-btn").forEach(btn => {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      const postId = this.dataset.id;
+      fetch("{% url 'like_post' 0 %}".replace('0', postId), {
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("likes-count-" + postId).textContent = data.total_likes;
+      });
+    });
+  });
+
+  // Comment forms
+  document.querySelectorAll(".comment-form").forEach(form => {
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const postId = this.dataset.id;
+      const content = this.querySelector("textarea").value;
+      fetch("{% url 'add_comment' 0 %}".replace('0', postId), {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ content })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          const ul = document.getElementById("comments-list-" + postId);
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${data.author}:</strong> ${data.content}`;
+          ul.appendChild(li);
+          document.getElementById("comments-count-" + postId).textContent = data.total_comments;
+          this.reset();
+        }
+      });
+    });
+  });
+});
+
+// --- Real-time post updates ---
+function fetchNewPosts() {
+  const firstPost = document.querySelector("#posts-container .card");
+  const lastPostId = firstPost ? firstPost.id.replace("post-", "") : 0;
+
+  fetch(`/fetch-new-posts/?last_post_id=${lastPostId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.html && data.html.trim() !== "") {
+        // Insert new posts at the top
+        document.getElementById("posts-container").insertAdjacentHTML("afterbegin", data.html);
+      }
+    })
+    .catch(err => console.error("Error fetching new posts:", err));
+}
+
+// Poll every 10 seconds
+setInterval(fetchNewPosts, 10000);
+
+</script>

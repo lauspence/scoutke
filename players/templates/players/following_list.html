@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold">👥 {{ user.username }} is Following</h4>
+    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">⬅ Back to Dashboard</a>
+  </div>
+
+  {% if following %}
+    <div class="list-group">
+      {% for u in following %}
+        <div class="list-group-item d-flex align-items-center justify-content-between shadow-sm mb-2 rounded hover-shadow">
+          
+          <!-- Left Section: Avatar + User Info -->
+          <div class="d-flex align-items-center">
+            {% if u.profile_picture %}
+              <img src="{{ u.profile_picture.url }}" 
+                   class="rounded-circle me-3 shadow-sm" width="60" height="60" alt="{{ u.username }}">
+            {% else %}
+              <img src="{% static 'img/default-avatar.png' %}" 
+                   class="rounded-circle me-3 shadow-sm" width="60" height="60" alt="Default Avatar">
+            {% endif %}
+            <div>
+              <h6 class="fw-bold mb-0">{{ u.username }}</h6>
+              <small class="text-muted text-capitalize">{{ u.role }}</small>
+            </div>
+          </div>
+
+          <!-- Right Section: Buttons -->
+          <div class="d-flex">
+            <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-primary me-2">👤 View</a>
+            <a href="{% url 'follow_user' u.id %}" class="btn btn-sm {% if u in user.following.all %}btn-outline-danger{% else %}btn-success{% endif %}">
+              {% if u in user.following.all %}❌ Unfollow{% else %}➕ Follow{% endif %}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center p-4 rounded shadow-sm">
+      <p class="mb-1">🙁 You’re not following anyone yet.</p>
+      <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm mt-2">🌟 Discover Users</a>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+.hover-shadow {
+    transition: all 0.3s ease-in-out;
+}
+.hover-shadow:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12) !important;
+}
+</style>
+{% endblock %}

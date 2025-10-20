@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+  <h3>🔎 Search Players</h3>
+
+  <!-- Search & Filters -->
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by username...">
+    </div>
+    <div class="col-md-2">
+      <select name="position" class="form-select">
+        <option value="any">Any Position</option>
+        <option value="Forward" {% if position == "Forward" %}selected{% endif %}>Forward</option>
+        <option value="Midfielder" {% if position == "Midfielder" %}selected{% endif %}>Midfielder</option>
+        <option value="Defender" {% if position == "Defender" %}selected{% endif %}>Defender</option>
+        <option value="Goalkeeper" {% if position == "Goalkeeper" %}selected{% endif %}>Goalkeeper</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="region" class="form-select">
+        <option value="any">Any Region</option>
+        <option value="Nairobi" {% if region == "Nairobi" %}selected{% endif %}>Nairobi</option>
+        <option value="Coast" {% if region == "Coast" %}selected{% endif %}>Coast</option>
+        <option value="Rift Valley" {% if region == "Rift Valley" %}selected{% endif %}>Rift Valley</option>
+        <option value="Western" {% if region == "Western" %}selected{% endif %}>Western</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <!-- ✅ Prevents "None" error -->
+      <input type="number" name="min_age" value="{{ min_age|default_if_none:'' }}" class="form-control" placeholder="Min Age">
+    </div>
+    <div class="col-md-2">
+      <!-- ✅ Prevents "None" error -->
+      <input type="number" name="max_age" value="{{ max_age|default_if_none:'' }}" class="form-control" placeholder="Max Age">
+    </div>
+    <div class="col-md-1">
+      <button type="submit" class="btn btn-primary w-100">Go</button>
+    </div>
+  </form>
+
+  <!-- Results -->
+  <div class="row g-3">
+    {% for profile in players %}
+      <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3">
+          {% if profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" 
+                 class="rounded-circle mb-2" 
+                 width="80" height="80" 
+                 alt="{{ profile.user.username }}">
+          {% else %}
+            <!-- ✅ Make sure the file exists in static/img/default-avatar.png -->
+            <img src="{% static 'img/default-avatar.png' %}" 
+                 class="rounded-circle mb-2" 
+                 width="80" height="80" 
+                 alt="Default Avatar">
+          {% endif %}
+
+          <h6 class="fw-bold">{{ profile.user.username }}</h6>
+          <p class="text-muted small mb-2">
+            {{ profile.position }} • {{ profile.age }} yrs • {{ profile.nationality }}
+          </p>
+          
+          <a href="{% url 'view_profile' profile.user.id %}" class="btn btn-sm btn-outline-primary">👀 View</a>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted">No players found.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>💾 Saved Players</h3>
+  <ul class="list-group">
+    {% for player in players %}
+      <li class="list-group-item">
+        <a href="{% url 'view_profile' player.id %}">
+          {{ player.username }} ({{ player.get_role_display }})
+        </a>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">No saved players yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

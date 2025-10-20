@@ -1,0 +1,19 @@
+{% for post in posts %}
+<div class="post-card mb-3 p-3 rounded shadow-sm bg-white" data-post-id="{{ post.id }}">
+    <div class="d-flex align-items-center mb-2">
+        {% if post.author.profile.image %}
+            <img src="{{ post.author.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="">
+        {% else %}
+            <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle me-2" width="40" height="40" alt="">
+        {% endif %}
+        <strong>{{ post.author.username }}</strong>
+        <small class="text-muted ms-2">{{ post.created_at|timesince }} ago</small>
+    </div>
+
+    <p>{{ post.content }}</p>
+
+    {% if post.image %}
+        <img src="{{ post.image.url }}" class="img-fluid rounded mb-2" alt="">
+    {% endif %}
+</div>
+{% endfor %}

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row g-4">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-4">
+
+      <!-- Profile Header -->
+      <div class="card shadow-sm mb-4 p-3 text-center">
+        <h3 class="mb-3">🔍 Scout Dashboard</h3>
+
+        {% if request.user.profile_picture %}
+          <img src="{{ request.user.profile_picture.url }}" class="rounded-circle mb-2" width="100" height="100" alt="{{ request.user.username }}">
+        {% else %}
+          <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle mb-2" width="100" height="100" alt="Default Avatar">
+        {% endif %}
+
+        <h5 class="fw-bold mb-0">{{ request.user.username }}</h5>
+        <small class="text-muted mb-2">{{ request.user.email }}</small>
+
+        <div class="d-flex justify-content-around w-100 mt-3">
+          <div class="px-3 text-center">
+            <h5 class="fw-bold mb-0">{{ request.user.followers.count|default:0 }}</h5>
+            <small class="text-muted">Followers</small>
+          </div>
+          <div class="px-3 text-center">
+            <h5 class="fw-bold mb-0">{{ request.user.following.count|default:0 }}</h5>
+            <small class="text-muted">Following</small>
+          </div>
+          <div class="px-3 text-center">
+            <h5 class="fw-bold mb-0">{{ highlights|length }}</h5>
+            <small class="text-muted">Posts</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="card text-center shadow-sm border-0 h-100">
+            <div class="card-body">
+              <h5 class="mb-2">⚽ Browse Players</h5>
+              <p class="text-muted small">Search by position, region, or age.</p>
+              <a href="{% url 'scout_search' %}" class="btn btn-primary btn-sm w-100">Search</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card text-center shadow-sm border-0 h-100">
+            <div class="card-body">
+              <h5 class="mb-2">💾 Saved Profiles</h5>
+              <p class="text-muted small">Track players you’re monitoring.</p>
+              <a href="{% url 'saved_players' %}" class="btn btn-success btn-sm w-100">View Saved</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card text-center shadow-sm border-0 h-100">
+            <div class="card-body">
+              <h5 class="mb-2">📊 Insights</h5>
+              <p class="text-muted small">Trending and top-rated players.</p>
+              <a href="{% url 'scout_insights' %}" class="btn btn-warning btn-sm w-100">View Insights</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended Players -->
+      <h5 class="fw-bold mb-3">⚽ Recommended Players</h5>
+      <div class="row g-3">
+        {% for player in recommended %}
+          <div class="col-md-12">
+            <div class="card shadow-sm text-center p-3">
+              {% if player.profile_picture %}
+                <img src="{{ player.profile_picture.url }}" class="rounded-circle mb-2" width="80" height="80">
+              {% else %}
+                <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle mb-2" width="80" height="80">
+              {% endif %}
+              <h6 class="fw-bold">{{ player.username }}</h6>
+              {% if player.playerprofile %}
+                <p class="text-muted small mb-2">
+                  {{ player.playerprofile.position }} • {{ player.playerprofile.age }} yrs • {{ player.playerprofile.nationality }}
+                </p>
+              {% endif %}
+              <a href="{% url 'view_profile' player.id %}" class="btn btn-sm btn-outline-primary">👀 View</a>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted">No players found.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <ul class="nav nav-tabs mb-3" id="scoutTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">Overview</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button">Media</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="reposts-tab" data-bs-toggle="tab" data-bs-target="#reposts" type="button">Reposts</button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview">
+              {% if highlights %}
+                {% for post in highlights %}
+                  <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+
+                      <!-- Post Header -->
+                      <div class="d-flex align-items-center mb-2">
+                        {% if post.author.profile_picture %}
+                          <img src="{{ post.author.profile_picture.url }}" class="rounded-circle me-2" width="45" height="45">
+                        {% else %}
+                          <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle me-2" width="45" height="45">
+                        {% endif %}
+                        <div>
+                          <strong>{{ post.author.username }}</strong>
+                          <small class="text-muted d-block">{{ post.created_at|naturaltime }}</small>
+                        </div>
+                      </div>
+
+                      <!-- Post / Repost Content -->
+                      {% if post.original_post %}
+                        <p class="text-muted small mb-2">🔁 Reposted from <strong>{{ post.original_post.author.username }}</strong></p>
+                        <div class="p-2 border rounded bg-light">
+                          {% if post.original_post.content %}
+                            <p>{{ post.original_post.content }}</p>
+                          {% endif %}
+                          {% if post.original_post.image %}
+                            <img src="{{ post.original_post.image.url }}" class="img-fluid rounded mb-2">
+                          {% endif %}
+                          {% if post.original_post.video %}
+                            <video controls class="w-100 rounded">
+                              <source src="{{ post.original_post.video.url }}" type="video/mp4">
+                            </video>
+                          {% endif %}
+                        </div>
+                      {% else %}
+                        {% if post.content %}
+                          <p>{{ post.content }}</p>
+                        {% endif %}
+                        {% if post.image %}
+                          <img src="{{ post.image.url }}" class="img-fluid rounded mb-2">
+                        {% endif %}
+                        {% if post.video %}
+                          <video controls class="w-100 rounded">
+                            <source src="{{ post.video.url }}" type="video/mp4">
+                          </video>
+                        {% endif %}
+                      {% endif %}
+
+                      <!-- Post Actions -->
+                      <div class="d-flex justify-content-between mt-3">
+                        <form action="{% url 'like_post' post.id %}" method="POST">
+                          {% csrf_token %}
+                          {% if user in post.likes.all %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">❤️ Unlike ({{ post.total_likes }})</button>
+                          {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary">👍 Like ({{ post.total_likes }})</button>
+                          {% endif %}
+                        </form>
+
+                        <a href="#comments-{{ post.id }}" class="btn btn-sm btn-outline-secondary">
+                          💬 Comments ({{ post.comments.count }})
+                        </a>
+
+                        <form action="{% url 'repost_post' post.id %}" method="POST">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-success">🔁 Repost</button>
+                        </form>
+
+                        <!-- Delete Button Placeholder -->
+                        {% if post.author == user %}
+                          <form action="{% url 'delete_post' post.id %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">🗑️ Delete</button>
+                          </form>
+                        {% endif %}
+                      </div>
+
+                      <!-- Comments Section -->
+                      <div id="comments-{{ post.id }}" class="mt-3">
+                        {% for comment in post.comments.all %}
+                        <div class="border-top pt-2 mt-2">
+                          <strong>{{ comment.author.username }}</strong>
+                          <small class="text-muted">{{ comment.created_at|naturaltime }}</small>
+                          <p class="mb-1">{{ comment.content }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small">No comments yet.</p>
+                        {% endfor %}
+
+                        <!-- Add Comment -->
+                        <form action="{% url 'add_comment' post.id %}" method="POST" class="mt-2">
+                          {% csrf_token %}
+                          <div class="input-group">
+                            <input type="text" name="content" placeholder="Add a comment..." class="form-control" required>
+                            <button class="btn btn-primary" type="submit">Post</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="text-muted">No highlights yet.</p>
+              {% endif %}
+            </div>
+
+            <!-- Media Tab -->
+            <div class="tab-pane fade" id="media">
+              {% if media_posts %}
+                <div class="row g-3">
+                  {% for post in media_posts %}
+                    <div class="col-6 col-md-4">
+                      <div class="card shadow-sm">
+                        {% if post.video %}
+                          <video class="w-100" controls>
+                            <source src="{{ post.video.url }}" type="video/mp4">
+                          </video>
+                        {% elif post.image %}
+                          <img src="{{ post.image.url }}" class="card-img-top">
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="text-muted">No media uploaded.</p>
+              {% endif %}
+            </div>
+
+            <!-- Reposts Tab -->
+            <div class="tab-pane fade" id="reposts">
+              {% if reposts %}
+                <div class="row g-3">
+                  {% for post in reposts %}
+                    <div class="col-6 col-md-4">
+                      <div class="card shadow-sm">
+                        {% if post.original_post.video %}
+                          <video class="w-100" controls>
+                            <source src="{{ post.original_post.video.url }}" type="video/mp4">
+                          </video>
+                        {% elif post.original_post.image %}
+                          <img src="{{ post.original_post.image.url }}" class="card-img-top">
+                        {% endif %}
+                        <div class="card-body p-2 text-center">
+                          <small>From {{ post.original_post.author.username }}</small>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="text-muted">No reposts yet.</p>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

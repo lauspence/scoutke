@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold mb-3">💾 Saved Players</h3>
+
+  <div class="row g-3">
+    {% for player in players %}
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <img src="{{ player.profile_picture.url|default:'/static/img/default-avatar.png' }}" 
+                 class="rounded-circle mb-2" width="80" height="80" alt="{{ player.username }}">
+            <h5 class="fw-bold mb-1">{{ player.username }}</h5>
+            <p class="text-muted small mb-1">{{ player.get_role_display }}</p>
+            <p class="text-muted small">{{ player.followers.count }} followers</p>
+
+            <div class="d-flex justify-content-center gap-2 mt-2">
+              <a href="{% url 'view_profile' player.id %}" class="btn btn-sm btn-outline-primary">👀 View</a>
+              <a href="{% url 'follow_user' player.id %}" 
+                 class="btn btn-sm btn-outline-success">+ Follow</a>
+              <a href="{% url 'unsave_player' player.id %}" 
+                 class="btn btn-sm btn-outline-danger">🗑 Unsave</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted">No saved players yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
