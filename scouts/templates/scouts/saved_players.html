@@ -1,32 +1,52 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Saved Players - ScoutKE{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h3 class="fw-bold mb-3">💾 Saved Players</h3>
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Scout workspace</p>
+    <h1 class="h3 fw-bold mb-1">Saved Players</h1>
+    <p class="text-muted mb-0">Keep a focused watchlist of prospects you want to monitor.</p>
+  </div>
+  <a href="{% url 'scout_search' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-search"></i>Find Players</a>
+</div>
 
-  <div class="row g-3">
-    {% for player in players %}
-      <div class="col-md-4">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body text-center">
-            <img src="{{ player.profile_picture.url|default:'/static/img/default-avatar.png' }}" 
-                 class="rounded-circle mb-2" width="80" height="80" alt="{{ player.username }}">
-            <h5 class="fw-bold mb-1">{{ player.username }}</h5>
-            <p class="text-muted small mb-1">{{ player.get_role_display }}</p>
-            <p class="text-muted small">{{ player.followers.count }} followers</p>
+<div class="row g-3">
+  {% for player in players %}
+    <div class="col-md-6 col-xl-4">
+      <article class="card border-0 h-100 resource-card">
+        <div class="card-body text-center">
+          {% if player.profile_picture %}
+            <img src="{{ player.profile_picture.url }}" class="rounded-circle avatar mb-3" width="84" height="84" alt="{{ player.username }}">
+          {% else %}
+            <img src="{% static 'img/default-avatar.svg' %}" class="rounded-circle avatar mb-3" width="84" height="84" alt="{{ player.username }}">
+          {% endif %}
+          <h2 class="h5 fw-bold mb-1">{{ player.username }}</h2>
+          <p class="text-muted small mb-1">{{ player.get_role_display }}</p>
+          {% if player.player_profile %}
+            <p class="text-muted small">{{ player.player_profile.position }}{% if player.player_profile.region %} &middot; {{ player.player_profile.region }}{% endif %}</p>
+          {% else %}
+            <p class="text-muted small">Player profile not completed</p>
+          {% endif %}
 
-            <div class="d-flex justify-content-center gap-2 mt-2">
-              <a href="{% url 'view_profile' player.id %}" class="btn btn-sm btn-outline-primary">👀 View</a>
-              <a href="{% url 'follow_user' player.id %}" 
-                 class="btn btn-sm btn-outline-success">+ Follow</a>
-              <a href="{% url 'unsave_player' player.id %}" 
-                 class="btn btn-sm btn-outline-danger">🗑 Unsave</a>
-            </div>
+          <div class="action-row justify-content-center mt-3">
+            <a href="{% url 'view_profile' player.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-eye"></i>View</a>
+            <a href="{% url 'unsave_player' player.id %}" class="btn btn-sm btn-outline-danger icon-btn"><i class="bi bi-bookmark-x"></i>Unsave</a>
           </div>
         </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+        <i class="bi bi-bookmark display-6" aria-hidden="true"></i>
+        <h2 class="h5">No saved players yet</h2>
+        <p class="text-muted mb-3">Search players and save the prospects you want to track.</p>
+        <a href="{% url 'scout_search' %}" class="btn btn-primary">Search Players</a>
       </div>
-    {% empty %}
-      <p class="text-muted">No saved players yet.</p>
-    {% endfor %}
-  </div>
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}

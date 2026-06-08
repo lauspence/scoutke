@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title|default:"Publish Opportunity" }} - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Opportunity board</p>
+    <h1 class="h3 fw-bold mb-1">{{ page_title|default:"Publish Opportunity" }}</h1>
+    <p class="text-muted mb-0">{{ page_description|default:"Create a clear call for trials, intakes, scholarships, or tournament opportunities." }}</p>
+  </div>
+  {% if opportunity %}
+    <a href="{% url 'opportunity_detail' opportunity.id %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Details</a>
+  {% else %}
+    <a href="{% url 'opportunities' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Board</a>
+  {% endif %}
+</div>
+
+<form method="post" class="card border-0">
+  <div class="card-body p-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <label class="form-label">Title</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+      </div>
+      <div class="col-lg-4">
+        <label class="form-label">Type</label>
+        {{ form.opportunity_type }}
+        {{ form.opportunity_type.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Location</label>
+        {{ form.location }}
+        {{ form.location.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Region</label>
+        {{ form.region }}
+        {{ form.region.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Event date</label>
+        {{ form.event_date }}
+        {{ form.event_date.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Application deadline</label>
+        {{ form.deadline }}
+        {{ form.deadline.errors }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Minimum age</label>
+        {{ form.age_min }}
+        {{ form.age_min.errors }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Maximum age</label>
+        {{ form.age_max }}
+        {{ form.age_max.errors }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Positions</label>
+        {{ form.positions }}
+        {{ form.positions.errors }}
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        {{ form.description }}
+        {{ form.description.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Requirements</label>
+        {{ form.requirements }}
+        {{ form.requirements.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contact instructions</label>
+        {{ form.contact_instructions }}
+        {{ form.contact_instructions.errors }}
+      </div>
+      <div class="col-12">
+        <label class="settings-check d-inline-flex">{{ form.is_active }} Active and visible</label>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-4 icon-btn" type="submit"><i class="bi bi-save"></i>{{ submit_label|default:"Publish opportunity" }}</button>
+  </div>
+</form>
+{% endblock %}

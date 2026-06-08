@@ -1,53 +1,67 @@
 {% extends 'base.html' %}
-{% load static %}
+
+{% block title %}Register - ScoutKE{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-body p-4">
-          <h3 class="text-center mb-4">Create an Account</h3>
+<div class="auth-shell">
+  <div class="row g-4 align-items-stretch">
+    <div class="col-lg-5 d-none d-lg-block">
+      <div class="auth-aside p-4 d-flex flex-column justify-content-end">
+        <p class="page-kicker mb-2">Join the network</p>
+        <h1 class="h3 fw-bold">Build your football identity.</h1>
+        <p class="mb-0">Choose your role, share your profile, and start contributing to Kenya's scouting pipeline.</p>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="card border-0">
+        <div class="card-body p-4 p-md-5">
+          <p class="page-kicker mb-1">Create account</p>
+          <h2 class="h3 fw-bold mb-4">Register</h2>
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            
-            <div class="mb-3">
-              <label class="form-label">Username</label>
-              {{ form.username }}
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              {{ form.email }}
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Role</label>
-              {{ form.role }}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Username</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Role</label>
+                {{ form.role }}
+                {{ form.role.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Profile picture</label>
+                {{ form.profile_picture }}
+                {{ form.profile_picture.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password</label>
+                {{ form.password1 }}
+                {{ form.password1.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm password</label>
+                {{ form.password2 }}
+                {{ form.password2.errors }}
+              </div>
             </div>
 
-            <!-- ✅ New profile picture field -->
-            <div class="mb-3">
-              <label class="form-label">Profile Picture</label>
-              {{ form.profile_picture }}
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              {{ form.password1 }}
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Confirm Password</label>
-              {{ form.password2 }}
-            </div>
-
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">Register</button>
-            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-4 icon-btn justify-content-center"><i class="bi bi-person-plus"></i>Create account</button>
           </form>
 
-          <p class="text-center mt-3">
+          <p class="text-center mt-4 mb-0">
             Already have an account? <a href="{% url 'login' %}">Login here</a>
           </p>
         </div>

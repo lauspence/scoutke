@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ScoutKE - Kenyan Football Network{% endblock %}
+
+{% block content %}
+<section class="hero-panel mb-4">
+  <div class="hero-panel__content">
+    <p class="page-kicker mb-2">Kenyan football, discovered together</p>
+    <h1 class="display-4 fw-bold mb-3">ScoutKE</h1>
+    <p class="lead mb-0">
+      A football network for sharing match moments, spotting promising players, and moving real talent into scout and club pipelines.
+    </p>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <a href="{% url 'register' %}" class="btn btn-primary icon-btn"><i class="bi bi-person-plus"></i>Join ScoutKE</a>
+      <a href="{% url 'talent_radar' %}" class="btn btn-light icon-btn"><i class="bi bi-radar"></i>Kenya Talent Radar</a>
+      <a href="{% url 'talent_spots' %}" class="btn btn-light icon-btn"><i class="bi bi-crosshair"></i>View Talent Spots</a>
+      <a href="{% url 'opportunities' %}" class="btn btn-light icon-btn"><i class="bi bi-calendar2-week"></i>Opportunities</a>
+      <a href="{% url 'feed' %}" class="btn btn-outline-light icon-btn"><i class="bi bi-rss"></i>Open Feed</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="fw-bold">Community leads</div>
+        <small>Fans and players can submit sightings from local matches.</small>
+      </div>
+      <div class="hero-stat">
+        <div class="fw-bold">Scout reports</div>
+        <small>Scouts add ratings, notes, and verification.</small>
+      </div>
+      <div class="hero-stat">
+        <div class="fw-bold">Club shortlist</div>
+        <small>Clubs track prospects through recruitment stages.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-header">
+    <div>
+      <p class="page-kicker mb-1">Live activity</p>
+      <h2 class="h4 fw-bold mb-0">Latest Football Pulse</h2>
+    </div>
+    <a href="{% url 'register' %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-pencil-square"></i>Start posting</a>
+  </div>
+  <div class="row g-3">
+    {% for post in recent_posts %}
+      <div class="col-md-6 col-lg-4">
+        <article class="card h-100 border-0 resource-card">
+          {% if post.image %}
+            <img src="{{ post.image.url }}" class="card-img-top" alt="Football post image">
+          {% endif %}
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <img src="{% if post.author.profile_picture %}{{ post.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" class="rounded-circle avatar" width="32" height="32" alt="{{ post.author.username }}">
+              <div>
+                <strong>{{ post.author.username }}</strong>
+                <div class="text-muted small">{{ post.author.role|title }}</div>
+              </div>
+            </div>
+            <span class="badge text-bg-light border mb-2">{{ post.get_category_display }}</span>
+            {% if post.prospect_name %}
+              <span class="badge text-bg-success mb-2">Talent: {{ post.prospect_name }}</span>
+            {% endif %}
+            <p class="mb-0">{{ post.content|truncatechars:140 }}</p>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <p class="text-muted">No football posts yet. Be the first to spot talent.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

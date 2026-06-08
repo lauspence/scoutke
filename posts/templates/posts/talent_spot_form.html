@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Talent Spot - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="mb-4">
+      <h1 class="h3 fw-bold mb-1">Submit Talent Spot</h1>
+      <p class="text-muted mb-0">Capture enough context for scouts and clubs to follow up responsibly.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="card border-0">
+      {% csrf_token %}
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-7">
+            <label class="form-label">Who did you spot?</label>
+            {{ form.prospect_name }}
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Position</label>
+            {{ form.position }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Age estimate</label>
+            {{ form.age_estimate }}
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Team, school, or academy</label>
+            {{ form.team_or_school }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Location</label>
+            {{ form.location }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Event or match</label>
+            {{ form.event_name }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Scouting notes</label>
+            {{ form.notes }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Photo evidence</label>
+            {{ form.evidence_image }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Video evidence</label>
+            {{ form.evidence_video }}
+          </div>
+        </div>
+      </div>
+      <div class="card-footer border-0 action-row">
+        <a href="{% url 'talent_spots' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Cancel</a>
+        <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-send"></i>Submit Spot</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

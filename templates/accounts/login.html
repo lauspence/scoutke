@@ -1,33 +1,47 @@
 {% extends 'base.html' %}
-{% load static %}
+
+{% block title %}Login - ScoutKE{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-5">
-      <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-body p-4">
-          <h3 class="text-center mb-4">Login</h3>
+<div class="auth-shell">
+  <div class="row g-4 align-items-stretch">
+    <div class="col-lg-5 d-none d-lg-block">
+      <div class="auth-aside p-4 d-flex flex-column justify-content-end">
+        <p class="page-kicker mb-2">Welcome back</p>
+        <h1 class="h3 fw-bold">Keep the football conversation moving.</h1>
+        <p class="mb-0">Log in to post highlights, follow prospects, and manage your scouting activity.</p>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="card border-0">
+        <div class="card-body p-4 p-md-5">
+          <p class="page-kicker mb-1">Account access</p>
+          <h2 class="h3 fw-bold mb-4">Login</h2>
           <form method="post">
             {% csrf_token %}
-            
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
             <div class="mb-3">
               <label class="form-label">Username</label>
               {{ form.username }}
+              {{ form.username.errors }}
             </div>
-            
-            <div class="mb-3">
+
+            <div class="mb-4">
               <label class="form-label">Password</label>
               {{ form.password }}
+              {{ form.password.errors }}
             </div>
 
-            <div class="d-grid">
-              <button type="submit" class="btn btn-success">Login</button>
-            </div>
+            <button type="submit" class="btn btn-primary w-100 icon-btn justify-content-center"><i class="bi bi-box-arrow-in-right"></i>Login</button>
           </form>
 
-          <p class="text-center mt-3">
-            Don’t have an account? <a href="{% url 'register' %}">Register here</a>
+          <p class="text-center mt-4 mb-0">
+            Don't have an account? <a href="{% url 'register' %}">Register here</a>
           </p>
         </div>
       </div>

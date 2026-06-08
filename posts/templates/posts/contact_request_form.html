@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Request - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="mb-4">
+      <h1 class="h3 fw-bold mb-1">Request Contact</h1>
+      <p class="text-muted mb-0">
+        {{ spot.linked_player.user.username }} &middot; {{ spot.prospect_name }} &middot; {{ spot.location }}
+      </p>
+    </div>
+
+    <form method="post" class="card border-0">
+      {% csrf_token %}
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <label class="form-label">Message to player</label>
+          {{ form.message }}
+          {{ form.message.errors }}
+        </div>
+        <div>
+          <label class="form-label">Proposed trial/contact date</label>
+          {{ form.proposed_date }}
+          {{ form.proposed_date.errors }}
+        </div>
+        {% if existing_request %}
+          <p class="text-muted small mt-2">You already have a pending request. Saving will update it.</p>
+        {% endif %}
+      </div>
+      <div class="card-footer border-0 action-row">
+        <a href="{% url 'talent_spot_detail' spot.id %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Cancel</a>
+        <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-send"></i>Send Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

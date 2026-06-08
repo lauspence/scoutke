@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Contact Requests - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Recruitment contact</p>
+    <h1 class="h3 fw-bold mb-1">Contact Requests</h1>
+    <p class="text-muted mb-0">Track club-to-player contact and trial requests.</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for request_item in contact_requests %}
+    <div class="col-lg-6">
+      <article class="card border-0 h-100 resource-card">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between gap-2">
+            <div>
+              {% if user.role == "club" %}
+                <h2 class="h5 fw-bold mb-1">{{ request_item.player.username }}</h2>
+              {% else %}
+                <h2 class="h5 fw-bold mb-1">{{ request_item.club.username }}</h2>
+              {% endif %}
+              <span class="badge text-bg-light border">{{ request_item.get_status_display }}</span>
+              {% if request_item.talent_spot %}
+                <div class="text-muted small mt-2">
+                  <a href="{% url 'talent_spot_detail' request_item.talent_spot.id %}" class="text-decoration-none">{{ request_item.talent_spot.prospect_name }}</a>
+                  &middot; {{ request_item.talent_spot.location }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="text-muted small">{{ request_item.created_at|naturaltime }}</div>
+          </div>
+
+          <p class="my-3">{{ request_item.message }}</p>
+          {% if request_item.proposed_date %}
+            <p class="text-muted small mb-3">Proposed date: {{ request_item.proposed_date }}</p>
+          {% endif %}
+
+          {% if user.role == "player" and request_item.status == "pending" %}
+            <div class="action-row justify-content-start">
+              <form method="post" action="{% url 'respond_contact_request' request_item.id 'accept' %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-success" type="submit">Accept</button>
+              </form>
+              <form method="post" action="{% url 'respond_contact_request' request_item.id 'decline' %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger" type="submit">Decline</button>
+              </form>
+            </div>
+          {% elif user.role == "club" and request_item.status == "pending" %}
+            <form method="post" action="{% url 'cancel_contact_request' request_item.id %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+        <i class="bi bi-envelope display-6" aria-hidden="true"></i>
+        <p class="mb-0">No contact requests yet.</p>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

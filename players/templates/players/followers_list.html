@@ -1,59 +1,51 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Followers - ScoutKE{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold">👥 Followers of {{ user.username }}</h4>
-    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">⬅ Back to Dashboard</a>
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Network</p>
+    <h1 class="h3 fw-bold mb-1">Followers of {{ user.username }}</h1>
   </div>
-
-  {% if followers %}
-    <div class="list-group">
-      {% for follower in followers %}
-        <div class="list-group-item d-flex align-items-center justify-content-between shadow-sm mb-2 rounded hover-shadow">
-
-          <!-- Left Section: Avatar + User Info -->
-          <div class="d-flex align-items-center">
-            {% if follower.profile_picture %}
-              <img src="{{ follower.profile_picture.url }}" 
-                   class="rounded-circle me-3 shadow-sm" width="60" height="60" alt="{{ follower.username }}">
-            {% else %}
-              <img src="{% static 'img/default-avatar.png' %}" 
-                   class="rounded-circle me-3 shadow-sm" width="60" height="60" alt="Default Avatar">
-            {% endif %}
-            <div>
-              <h6 class="fw-bold mb-0">{{ follower.username }}</h6>
-              <small class="text-muted text-capitalize">{{ follower.role }}</small>
-            </div>
-          </div>
-
-          <!-- Right Section: Buttons -->
-          <div class="d-flex">
-            <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-primary me-2">👤 View</a>
-            <a href="{% url 'follow_user' follower.id %}" 
-               class="btn btn-sm {% if follower in user.following.all %}btn-outline-danger{% else %}btn-success{% endif %}">
-              {% if follower in user.following.all %}❌ Unfollow{% else %}➕ Follow Back{% endif %}
-            </a>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info text-center p-4 rounded shadow-sm">
-      <p class="mb-1">🙁 No one is following {{ user.username }} yet.</p>
-      <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm mt-2">🌟 Explore Users</a>
-    </div>
-  {% endif %}
+  <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
 </div>
 
-<style>
-.hover-shadow {
-    transition: all 0.3s ease-in-out;
-}
-.hover-shadow:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12) !important;
-}
-</style>
+{% if followers %}
+  <div class="list-group">
+    {% for follower in followers %}
+      <div class="list-group-item d-flex align-items-center justify-content-between gap-3 mb-2 rounded resource-card">
+        <div class="d-flex align-items-center">
+          {% if follower.profile_picture %}
+            <img src="{{ follower.profile_picture.url }}" class="rounded-circle avatar me-3" width="56" height="56" alt="{{ follower.username }}">
+          {% else %}
+            <img src="{% static 'img/default-avatar.svg' %}" class="rounded-circle avatar me-3" width="56" height="56" alt="{{ follower.username }}">
+          {% endif %}
+          <div>
+            <h2 class="h6 fw-bold mb-0">{{ follower.username }}</h2>
+            <small class="text-muted text-capitalize">{{ follower.role }}</small>
+          </div>
+        </div>
+        <div class="action-row justify-content-end">
+          <a href="{% url 'view_profile' follower.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-eye"></i>View</a>
+          {% if follower != request.user %}
+            <form method="post" action="{% url 'follow_user' follower.id %}">
+              {% csrf_token %}
+              <button class="btn btn-sm {% if follower in request.user.following.all %}btn-outline-danger{% else %}btn-primary{% endif %}" type="submit">
+                {% if follower in request.user.following.all %}Unfollow{% else %}Follow Back{% endif %}
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <i class="bi bi-people display-6" aria-hidden="true"></i>
+    <p class="text-muted mb-3">No one is following {{ user.username }} yet.</p>
+    <a href="{% url 'talent_radar' %}" class="btn btn-primary">Explore Talent Radar</a>
+  </div>
+{% endif %}
 {% endblock %}

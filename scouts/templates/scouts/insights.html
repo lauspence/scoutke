@@ -1,22 +1,47 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-  <h3 class="fw-bold mb-3">📊 Top Trending Players</h3>
-  <p class="text-muted small">Based on follower count this week</p>
 
-  <div class="list-group">
-    {% for player in top_players %}
-      <a href="{% url 'view_profile' player.id %}" 
-         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-        <div>
-          <strong>{{ player.username }}</strong> 
-          <span class="text-muted small">({{ player.get_role_display }})</span>
-        </div>
-        <span class="badge bg-primary rounded-pill">{{ player.follower_count }} followers</span>
-      </a>
-    {% empty %}
-      <p class="text-muted">No trending players right now.</p>
-    {% endfor %}
+{% block title %}Scout Insights - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Scout insights</p>
+    <h1 class="h3 fw-bold mb-1">Trending Players</h1>
+    <p class="text-muted mb-0">Players gaining attention through followers, posts, and community activity.</p>
   </div>
+  <a href="{% url 'scout_search' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-search"></i>Search Players</a>
+</div>
+
+<div class="row g-3">
+  {% for player in top_players %}
+    <div class="col-md-6 col-xl-4">
+      <a href="{% url 'view_profile' player.id %}" class="text-decoration-none text-dark">
+        <article class="card border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <p class="page-kicker mb-1">Rank {{ forloop.counter }}</p>
+                <h2 class="h5 fw-bold mb-1">{{ player.username }}</h2>
+                <p class="text-muted small mb-0">{{ player.get_role_display }}</p>
+              </div>
+              <span class="badge text-bg-success">{{ player.follower_count }} followers</span>
+            </div>
+            <div class="stat-tile mt-3">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted small">Posts</span>
+                <strong>{{ player.post_count }}</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+      </a>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="surface-panel p-4 text-center">
+        <p class="text-muted mb-0">No trending players right now.</p>
+      </div>
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Talent Spots - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Recruitment leads</p>
+    <h1 class="h3 fw-bold mb-1">Talent Spots</h1>
+    <p class="text-muted mb-0">Community sightings that can become real scouting leads.</p>
+  </div>
+  <a href="{% url 'create_talent_spot' %}" class="btn btn-primary icon-btn"><i class="bi bi-plus-circle"></i>Submit Spot</a>
+</div>
+
+<form method="get" class="surface-panel filter-panel p-3 mb-4">
+  <div class="row g-2 align-items-end">
+  <div class="col-lg-4 col-md-6">
+    <label class="form-label small fw-bold">Search</label>
+    <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="Search name, team, event, or location">
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label small fw-bold">Position</label>
+    <select name="position" class="form-select">
+      <option value="any">Any position</option>
+      {% for value,label in position_choices %}
+        <option value="{{ value }}" {% if position == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label small fw-bold">Status</label>
+    <select name="status" class="form-select">
+      <option value="active" {% if status == "active" %}selected{% endif %}>Active leads</option>
+      <option value="any" {% if status == "any" %}selected{% endif %}>All statuses</option>
+      {% for value,label in status_choices %}
+        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label small fw-bold">Location</label>
+    <input type="search" name="location" value="{{ location }}" class="form-control" placeholder="County, town, venue">
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label small fw-bold">Confirmations</label>
+    <select name="min_confirmations" class="form-select">
+      <option value="" {% if not min_confirmations %}selected{% endif %}>Any</option>
+      <option value="1" {% if min_confirmations == "1" %}selected{% endif %}>1+</option>
+      <option value="3" {% if min_confirmations == "3" %}selected{% endif %}>3+</option>
+      <option value="5" {% if min_confirmations == "5" %}selected{% endif %}>5+</option>
+    </select>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label small fw-bold">Sort</label>
+    <select name="sort" class="form-select">
+      <option value="recent" {% if sort == "recent" %}selected{% endif %}>Newest</option>
+      <option value="updated" {% if sort == "updated" %}selected{% endif %}>Recently updated</option>
+      <option value="confirmed" {% if sort == "confirmed" %}selected{% endif %}>Most confirmed</option>
+      <option value="name" {% if sort == "name" %}selected{% endif %}>Name A-Z</option>
+    </select>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="settings-check mb-0 h-100">
+      <input type="checkbox" name="has_media" value="1" {% if has_media %}checked{% endif %}>
+      Has evidence media
+    </label>
+  </div>
+  <div class="col-lg-2 col-md-6 d-grid">
+    <button class="btn btn-primary icon-btn justify-content-center" type="submit"><i class="bi bi-search"></i>Filter</button>
+  </div>
+  <div class="col-lg-2 col-md-6 d-grid">
+    <a href="{% url 'talent_spots' %}" class="btn btn-outline-secondary icon-btn justify-content-center"><i class="bi bi-x-circle"></i>Reset</a>
+  </div>
+  </div>
+</form>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <p class="text-muted mb-0">{{ result_count }} talent spot{{ result_count|pluralize }} found</p>
+  <a href="{% url 'talent_radar' %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-radar"></i>Open radar</a>
+</div>
+
+<div class="row g-3">
+  {% for spot in spots %}
+    <div class="col-md-6 col-xl-4">
+      <article class="card h-100 border-0 resource-card">
+        {% if spot.evidence_image %}
+          <img src="{{ spot.evidence_image.url }}" class="card-img-top" alt="{{ spot.prospect_name }}">
+        {% else %}
+          <img src="{% static 'img/tuskeryouth.jpg' %}" class="card-img-top" alt="Kenyan youth footballers">
+        {% endif %}
+        <div class="card-body">
+          <div class="d-flex justify-content-between gap-2 mb-2">
+            <span class="badge text-bg-light border">{{ spot.get_status_display }}</span>
+            <span class="text-muted small">{{ spot.created_at|naturaltime }}</span>
+          </div>
+          <h2 class="h5 fw-bold mb-1">{{ spot.prospect_name }}</h2>
+          <p class="text-muted small mb-2">
+            {{ spot.get_position_display }}{% if spot.age_estimate %} &middot; approx {{ spot.age_estimate }}{% endif %}
+          </p>
+          <p class="mb-2">{{ spot.notes|truncatechars:120 }}</p>
+          <div class="small text-muted mb-3">
+            <div><i class="bi bi-geo-alt me-1"></i>{{ spot.location }}</div>
+            {% if spot.team_or_school %}<div><i class="bi bi-people me-1"></i>{{ spot.team_or_school }}</div>{% endif %}
+            {% if spot.event_name %}<div><i class="bi bi-calendar-event me-1"></i>{{ spot.event_name }}</div>{% endif %}
+            {% if spot.evidence_image or spot.evidence_video %}<div><i class="bi bi-camera-video me-1"></i>Evidence media attached</div>{% endif %}
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small text-muted">{{ spot.confirmations_count|default:spot.confirmation_count }} confirmations</span>
+            <a href="{% url 'talent_spot_detail' spot.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-arrow-right"></i>Open</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+        <i class="bi bi-crosshair display-6" aria-hidden="true"></i>
+        <h2 class="h5">No talent spots yet</h2>
+        <p class="text-muted mb-3">The next breakthrough could start with one good observation.</p>
+        <a href="{% url 'create_talent_spot' %}" class="btn btn-primary">Submit the first spot</a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

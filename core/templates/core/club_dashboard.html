@@ -1,88 +1,162 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+
+{% block title %}Club Dashboard - ScoutKE{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<section class="dashboard-command mb-4">
+  <div>
+    <p class="page-kicker mb-2">Club recruitment room</p>
+    <h1 class="h3 fw-bold mb-2">Recruitment Dashboard</h1>
+    <p class="mb-0">Welcome {{ request.user.username }}. Track leads, scout reports, outreach, and shortlist movement from one place.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'club_shortlist' %}" class="btn btn-light btn-sm icon-btn"><i class="bi bi-bookmark-check"></i>Shortlist</a>
+    <a href="{% url 'talent_radar' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-radar"></i>Talent Radar</a>
+    <a href="{% url 'contact_requests' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-envelope"></i>Contacts</a>
+    <a href="{% url 'manage_opportunities' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-calendar2-week"></i>Opportunities</a>
+  </div>
+</section>
 
-  <!-- Top Section -->
-  <div class="card shadow border-0 mb-4">
-    <div class="card-body">
-      <h2>🏟️ Club Dashboard</h2>
-      <p class="text-muted">Welcome {{ request.user.username }}! Manage recruitment and scout reports here.</p>
+{% include "partials/onboarding_checklist.html" %}
 
-      <!-- Quick Actions -->
-      <div class="row mt-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body text-center">
-              <h5>📋 Recruitment Requests</h5>
-              <p>Review and approve scouts’ player recommendations.</p>
-              <a href="#" class="btn btn-primary btn-sm">View Requests</a>
-            </div>
-          </div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6"><div class="stat-tile dashboard-metric"><span>Active leads</span><strong>{{ active_leads_count }}</strong></div></div>
+  <div class="col-md-3 col-6"><div class="stat-tile dashboard-metric"><span>Shortlisted</span><strong>{{ shortlist_count }}</strong></div></div>
+  <div class="col-md-3 col-6"><div class="stat-tile dashboard-metric"><span>Pending contacts</span><strong>{{ pending_contacts_count }}</strong></div></div>
+  <div class="col-md-3 col-6"><div class="stat-tile dashboard-metric"><span>Trial stage</span><strong>{{ trial_count }}</strong></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-4 col-lg-5">
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 fw-bold mb-0">Shortlist Pipeline</h2>
+          <a href="{% url 'club_shortlist' %}" class="btn btn-sm btn-outline-primary">Open</a>
         </div>
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body text-center">
-              <h5>⚽ Player Database</h5>
-              <p>Browse all players and track their performance.</p>
-              <a href="#" class="btn btn-success btn-sm">Browse Players</a>
+        {% for entry in shortlist_entries %}
+          <a href="{% url 'talent_spot_detail' entry.talent_spot.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong>{{ entry.talent_spot.prospect_name }}</strong>
+              <span class="badge text-bg-light border">{{ entry.get_status_display }}</span>
             </div>
-          </div>
+            <div class="text-muted small">{{ entry.talent_spot.location }} &middot; {{ entry.talent_spot.get_position_display }}</div>
+          </a>
+        {% empty %}
+          <p class="text-muted mb-3">No shortlisted prospects yet.</p>
+          <a href="{% url 'talent_spots' %}" class="btn btn-sm btn-primary">Browse leads</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 fw-bold mb-0">Contact Requests</h2>
+          <a href="{% url 'contact_requests' %}" class="btn btn-sm btn-outline-primary">View all</a>
         </div>
+        {% for request_item in contact_requests %}
+          <a href="{% url 'contact_requests' %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong>{{ request_item.player.username }}</strong>
+              <span class="badge text-bg-light border">{{ request_item.get_status_display }}</span>
+            </div>
+            <p class="text-muted small mb-0">{{ request_item.message|truncatechars:90 }}</p>
+          </a>
+        {% empty %}
+          <p class="text-muted mb-0">No contact requests yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 fw-bold mb-0">Fresh Leads</h2>
+          <a href="{% url 'talent_spots' %}" class="btn btn-sm btn-outline-primary">View all</a>
+        </div>
+        {% for spot in talent_spots %}
+          <a href="{% url 'talent_spot_detail' spot.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong>{{ spot.prospect_name }}</strong>
+              <span class="badge text-bg-light border">{{ spot.get_status_display }}</span>
+            </div>
+            <div class="text-muted small">{{ spot.location }} &middot; {{ spot.get_position_display }}</div>
+          </a>
+        {% empty %}
+          <p class="text-muted mb-0">No recruitment leads yet.</p>
+        {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- Scout Reports Feed -->
-  <div class="card shadow border-0">
-    <div class="card-body">
-      <h5 class="mb-3">📢 Latest Scout Reports</h5>
-      <p class="text-muted small">See what scouts are saying about potential signings.</p>
-
-      <!-- Example Report 1 -->
-      <div class="card mb-3 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-2">
-            <img src="{% static 'img/default-avatar.png' %}" 
-                 class="rounded-circle me-2" width="40" height="40" alt="Scout">
-            <div>
-              <strong>ScoutMark22</strong> 
-              <div class="text-muted small">Midfield Specialist • Nairobi</div>
+  <div class="col-xl-4 col-lg-7">
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h5 fw-bold mb-2">Scout Reports</h2>
+        <p class="text-muted small">Latest scout notes across the recruitment pool.</p>
+        {% for report in scout_reports %}
+          <a href="{% url 'talent_spot_detail' report.talent_spot.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong>{{ report.talent_spot.prospect_name }}</strong>
+              <span class="badge text-bg-success">Avg {{ report.average_score }}/10</span>
             </div>
-          </div>
-          <p>💡 Recommended <strong>John Doe</strong> (Striker, 19 yrs) — fast, clinical finisher with excellent positioning.</p>
-          
-          <!-- Action buttons -->
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-success">✅ Approve</button>
-            <button class="btn btn-sm btn-danger">❌ Reject</button>
-          </div>
-        </div>
+            <div class="text-muted small">By {{ report.scout.username }} &middot; {{ report.get_recommendation_display }}</div>
+            <p class="small mb-0 mt-2">{{ report.summary|truncatechars:120 }}</p>
+          </a>
+        {% empty %}
+          <p class="text-muted mb-0">No scout reports yet.</p>
+        {% endfor %}
       </div>
-
-      <!-- Example Report 2 -->
-      <div class="card mb-3 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-2">
-            <img src="{% static 'img/default-avatar.png' %}" 
-                 class="rounded-circle me-2" width="40" height="40" alt="Scout">
-            <div>
-              <strong>TalentFinderKE</strong> 
-              <div class="text-muted small">Forward Scout • Mombasa</div>
-            </div>
-          </div>
-          <p>🔥 Suggested <strong>Ali Yusuf</strong> (Winger, 21 yrs) — quick dribbler, strong left foot, consistent assists.</p>
-          
-          <!-- Action buttons -->
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-success">✅ Approve</button>
-            <button class="btn btn-sm btn-danger">❌ Reject</button>
-          </div>
-        </div>
-      </div>
-
     </div>
+
+    <div class="row g-3">
+      <div class="col-md-6 col-lg-12">
+        <a href="{% url 'scout_search' %}" class="text-decoration-none text-dark">
+          <div class="stat-tile h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h3 class="h6 fw-bold mb-0">Player Database</h3>
+              <i class="bi bi-people text-primary"></i>
+            </div>
+            <p class="text-muted small mb-0">Browse player profiles and compare fit by role, region, and performance.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-12">
+        <a href="{% url 'talent_spots' %}" class="text-decoration-none text-dark">
+          <div class="stat-tile h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h3 class="h6 fw-bold mb-0">Lead Review</h3>
+              <i class="bi bi-crosshair text-success"></i>
+            </div>
+            <p class="text-muted small mb-0">Review community sightings and scout-verified prospects.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-12">
+        <a href="{% url 'manage_opportunities' %}" class="text-decoration-none text-dark">
+          <div class="stat-tile h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h3 class="h6 fw-bold mb-0">Opportunity Pipeline</h3>
+              <i class="bi bi-calendar2-week text-success"></i>
+            </div>
+            <p class="text-muted small mb-0">Publish trials and manage applicants from one board.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="section-header">
+      <div>
+        <p class="page-kicker mb-1">Live feed</p>
+        <h2 class="h5 fw-bold mb-0">Football Pulse</h2>
+      </div>
+    </div>
+    {% include "posts/feeds.html" with form=form posts=posts comment_form=comment_form %}
   </div>
 </div>
 {% endblock %}

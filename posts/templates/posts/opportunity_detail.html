@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ opportunity.title }} - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">{{ opportunity.get_opportunity_type_display }}</p>
+    <h1 class="h3 fw-bold mb-1">{{ opportunity.title }}</h1>
+    <p class="text-muted mb-0">
+      Published by {{ opportunity.publisher.username }}
+      {% if opportunity.publisher.is_verified_account %}<span class="verified-badge"><i class="bi bi-patch-check-fill"></i></span>{% endif %}
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    {% if can_manage %}
+      <a href="{% url 'edit_opportunity' opportunity.id %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-pencil-square"></i>Edit</a>
+      <form method="post" action="{% url 'toggle_opportunity_active' opportunity.id %}">
+        {% csrf_token %}
+        <button class="btn {% if opportunity.is_active %}btn-outline-danger{% else %}btn-primary{% endif %} icon-btn" type="submit">
+          <i class="bi {% if opportunity.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+          {% if opportunity.is_active %}Close{% else %}Reopen{% endif %}
+        </button>
+      </form>
+    {% endif %}
+    <a href="{% url 'opportunities' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Board</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <article class="card border-0">
+      <div class="card-body p-4">
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          {% if opportunity.is_open %}
+            <span class="badge text-bg-success p-2">Open</span>
+          {% else %}
+            <span class="badge text-bg-light border p-2">Closed</span>
+          {% endif %}
+          <span class="badge text-bg-light border p-2"><i class="bi bi-geo-alt me-1"></i>{{ opportunity.location }}</span>
+          {% if opportunity.region %}<span class="badge text-bg-light border p-2">{{ opportunity.region }}</span>{% endif %}
+          <span class="badge text-bg-light border p-2">{{ opportunity.application_count }} applicants</span>
+          <span class="badge text-bg-light border p-2">{{ opportunity.save_count }} saved</span>
+        </div>
+
+        <h2 class="h5 fw-bold mb-3">Details</h2>
+        <p>{{ opportunity.description|linebreaksbr }}</p>
+
+        {% if opportunity.requirements %}
+          <h2 class="h5 fw-bold mt-4 mb-3">Requirements</h2>
+          <p>{{ opportunity.requirements|linebreaksbr }}</p>
+        {% endif %}
+
+        {% if opportunity.contact_instructions and can_manage %}
+          <h2 class="h5 fw-bold mt-4 mb-3">Private Contact Instructions</h2>
+          <p>{{ opportunity.contact_instructions|linebreaksbr }}</p>
+        {% endif %}
+      </div>
+    </article>
+
+    {% if can_manage %}
+      <section class="card border-0 mt-4">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <h2 class="h5 fw-bold mb-0">Applications</h2>
+            <span class="badge text-bg-light border">{{ opportunity.application_count }} total</span>
+          </div>
+          <div class="application-filter-bar mb-3">
+            {% for item in application_status_cards %}
+              <a href="?application_status={{ item.value }}" class="btn btn-sm {% if application_status == item.value %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ item.label }} <span class="badge text-bg-light border ms-1">{{ item.count }}</span>
+              </a>
+            {% endfor %}
+          </div>
+          {% for application in applications %}
+            <div class="application-row">
+              <div>
+                <div class="applicant-summary">
+                  <img src="{% if application.player.profile_picture %}{{ application.player.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" class="rounded-circle avatar" width="54" height="54" alt="{{ application.player.username }}">
+                  <div>
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                      <strong>{{ application.player.username }}</strong>
+                      <span class="badge text-bg-light border">{{ application.get_status_display }}</span>
+                      {% if application.player.player_profile %}
+                        <span class="badge text-bg-success">Talent {{ application.player.player_profile.talent_score }}</span>
+                      {% endif %}
+                    </div>
+                    <div class="text-muted small">
+                      {{ application.created_at|naturaltime }}
+                      {% if application.player.player_profile %}
+                        &middot; {{ application.player.player_profile.position|default:"Position not added" }}
+                        {% if application.player.player_profile.region %}&middot; {{ application.player.player_profile.region }}{% endif %}
+                        {% if application.player.player_profile.age %}&middot; {{ application.player.player_profile.age }} yrs{% endif %}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <p class="mb-0 mt-3">{{ application.message|linebreaksbr }}</p>
+              </div>
+              <div class="application-actions">
+                <a href="{% url 'view_profile' application.player.id %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-person-badge"></i>Profile</a>
+                <a href="{% url 'scout_card' application.player.id %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-share"></i>Card</a>
+                {% if application.status != "withdrawn" %}
+                  <form method="post" action="{% url 'update_opportunity_application' application.id 'review' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-primary btn-sm w-100" type="submit">Review</button>
+                  </form>
+                  <form method="post" action="{% url 'update_opportunity_application' application.id 'shortlist' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-sm w-100" type="submit">Shortlist</button>
+                  </form>
+                  <form method="post" action="{% url 'update_opportunity_application' application.id 'decline' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm w-100" type="submit">Decline</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No applications in this status yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">Opportunity Snapshot</h2>
+        <dl class="row mb-0">
+          <dt class="col-5">Event</dt><dd class="col-7">{% if opportunity.event_date %}{{ opportunity.event_date|date:"M j, Y" }}{% else %}Flexible{% endif %}</dd>
+          <dt class="col-5">Deadline</dt><dd class="col-7">{% if opportunity.deadline %}{{ opportunity.deadline|date:"M j, Y" }}{% else %}Open rolling{% endif %}</dd>
+          <dt class="col-5">Age</dt><dd class="col-7">{% if opportunity.age_min or opportunity.age_max %}{{ opportunity.age_min|default:"Any" }} - {{ opportunity.age_max|default:"Any" }}{% else %}Any{% endif %}</dd>
+          <dt class="col-5">Positions</dt><dd class="col-7">{{ opportunity.positions|default:"Any" }}</dd>
+        </dl>
+
+        {% if user.is_authenticated and user.role == "player" %}
+          <form method="post" action="{% url 'toggle_save_opportunity' opportunity.id %}" class="mt-4">
+            {% csrf_token %}
+            <button class="btn {% if is_saved %}btn-success{% else %}btn-outline-primary{% endif %} w-100 icon-btn" type="submit">
+              <i class="bi {% if is_saved %}bi-bookmark-check{% else %}bi-bookmark{% endif %}"></i>
+              {% if is_saved %}Saved{% else %}Save opportunity{% endif %}
+            </button>
+          </form>
+          {% if user_application %}
+            <div class="alert alert-success mt-4">Application {{ user_application.get_status_display|lower }}.</div>
+            {% if user_application.status != "withdrawn" %}
+              <div class="d-grid gap-2">
+                <a href="{% url 'apply_opportunity' opportunity.id %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-pencil-square"></i>Update application</a>
+                <form method="post" action="{% url 'withdraw_opportunity_application' user_application.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger w-100 icon-btn" type="submit"><i class="bi bi-x-circle"></i>Withdraw application</button>
+                </form>
+              </div>
+            {% endif %}
+          {% elif opportunity.is_open %}
+            <a href="{% url 'apply_opportunity' opportunity.id %}" class="btn btn-primary w-100 mt-4 icon-btn"><i class="bi bi-send"></i>Apply</a>
+          {% else %}
+            <div class="alert alert-secondary mt-4 mb-0">Applications are closed.</div>
+          {% endif %}
+        {% elif not user.is_authenticated %}
+          <a href="{% url 'login' %}" class="btn btn-primary w-100 mt-4 icon-btn"><i class="bi bi-box-arrow-in-right"></i>Login to apply</a>
+        {% endif %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

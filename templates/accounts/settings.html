@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Settings - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">System settings</p>
+    <h1 class="h3 fw-bold mb-1">Settings</h1>
+    <p class="text-muted mb-0">Control your account, appearance, privacy, and ScoutKE preferences.</p>
+  </div>
+  <a href="{% url 'profile' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-person"></i>Profile</a>
+</div>
+
+<div class="row g-4 settings-layout">
+  <div class="col-lg-3">
+    <div class="card border-0 settings-sidebar">
+      <div class="card-body p-2">
+        <div class="nav nav-pills flex-lg-column settings-tabs" role="tablist">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#appearance" type="button">
+            <i class="bi bi-circle-half"></i><span>Appearance</span>
+          </button>
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#account" type="button">
+            <i class="bi bi-person-gear"></i><span>Account</span>
+          </button>
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#preferences" type="button">
+            <i class="bi bi-sliders"></i><span>Preferences</span>
+          </button>
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#security" type="button">
+            <i class="bi bi-key"></i><span>Security</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <div class="tab-content">
+      <section class="tab-pane fade show active" id="appearance">
+        <div class="card border-0">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-1">Appearance</h2>
+            <p class="text-muted mb-4">Theme is saved on this device. Layout density is saved to your account under Preferences.</p>
+
+            <div class="settings-row">
+              <div>
+                <h3 class="h6 fw-bold mb-1">Theme</h3>
+                <p class="text-muted small mb-0">Choose light, dark, or follow your device setting.</p>
+              </div>
+              <div class="theme-switch settings-theme-switch" role="group" aria-label="Theme preference">
+                <button type="button" class="theme-option" data-theme-option="light" aria-pressed="false">
+                  <i class="bi bi-sun"></i><span>Light</span>
+                </button>
+                <button type="button" class="theme-option" data-theme-option="dark" aria-pressed="false">
+                  <i class="bi bi-moon-stars"></i><span>Dark</span>
+                </button>
+                <button type="button" class="theme-option" data-theme-option="system" aria-pressed="false">
+                  <i class="bi bi-laptop"></i><span>System</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-pane fade" id="account">
+        <div class="card border-0">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-4">Account Details</h2>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="account">
+              {% if account_form.non_field_errors %}
+                <div class="alert alert-danger">{{ account_form.non_field_errors }}</div>
+              {% endif %}
+              <div class="row g-3">
+                <div class="col-12">
+                  <div class="media-inline-preview">
+                    <img
+                      id="settingsProfilePreview"
+                      src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}"
+                      class="rounded-circle avatar"
+                      width="72"
+                      height="72"
+                      alt="Profile picture preview"
+                    >
+                    <div>
+                      <strong>Profile picture preview</strong>
+                      <p class="text-muted small mb-0">Upload a clear image. If you clear it, ScoutKE will use the default avatar.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Username</label>
+                  {{ account_form.username }}
+                  {{ account_form.username.errors }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  {{ account_form.email }}
+                  {{ account_form.email.errors }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Profile picture</label>
+                  {{ account_form.profile_picture|attr:"data-media-preview-input:settingsProfilePreview" }}
+                  {{ account_form.profile_picture.errors }}
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Bio</label>
+                  {{ account_form.bio }}
+                  {{ account_form.bio.errors }}
+                </div>
+              </div>
+              <button class="btn btn-primary mt-4 icon-btn" type="submit"><i class="bi bi-save"></i>Save account</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-pane fade" id="preferences">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="preferences">
+
+          <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-bold mb-1">Account Preferences</h2>
+              <p class="text-muted mb-4">These are saved to your ScoutKE account and follow you across devices.</p>
+
+              <div class="settings-row">
+                <div>
+                  <h3 class="h6 fw-bold mb-1">Layout density</h3>
+                  <p class="text-muted small mb-0">Compact mode fits more scouting information on screen.</p>
+                </div>
+                {{ settings_form.layout_density }}
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <h3 class="h6 fw-bold mb-1">Profile visibility</h3>
+                  <p class="text-muted small mb-0">Decide who can inspect your profile details.</p>
+                </div>
+                {{ settings_form.profile_visibility }}
+              </div>
+
+              <div class="settings-row">
+                <div>
+                  <h3 class="h6 fw-bold mb-1">Default feed</h3>
+                  <p class="text-muted small mb-0">Pick the feed you want to land on first.</p>
+                </div>
+                {{ settings_form.default_feed }}
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-bold mb-3">Notifications</h2>
+              <div class="settings-stack">
+                <label class="settings-check">{{ settings_form.notify_in_app }} In-app notifications</label>
+                <label class="settings-check">{{ settings_form.notify_email }} Email notifications</label>
+                <label class="settings-check">{{ settings_form.notify_contact }} Contact requests</label>
+                <label class="settings-check">{{ settings_form.notify_reports }} Scout reports and verifications</label>
+                <label class="settings-check">{{ settings_form.notify_social }} Follows, likes, and comments</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-bold mb-3">Privacy</h2>
+              <div class="settings-stack">
+                <label class="settings-check">{{ settings_form.show_email }} Show email on profile</label>
+                <label class="settings-check">{{ settings_form.allow_contact }} Allow club contact requests</label>
+                <label class="settings-check">{{ settings_form.show_stats }} Show performance stats to scouts and clubs</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-bold mb-3">Feed & Media</h2>
+              <div class="settings-stack">
+                <label class="settings-check">{{ settings_form.autoplay_video }} Auto-play videos</label>
+                <label class="settings-check">{{ settings_form.show_media }} Show media previews</label>
+                <label class="settings-check">{{ settings_form.compact_cards }} Compact post cards</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-0">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-bold mb-3">Role Preferences</h2>
+              {% if user.role == "player" %}
+                <div class="settings-stack">
+                  <label class="settings-check">{{ settings_form.player_available }} Available for scout review</label>
+                  <label class="settings-check">{{ settings_form.player_trials }} Open to trial invitations</label>
+                </div>
+              {% elif user.role == "scout" %}
+                <div class="settings-stack">
+                  <label class="settings-check">{{ settings_form.scout_regional_alerts }} Regional talent alerts</label>
+                  <label class="settings-check">{{ settings_form.scout_shortlist_alerts }} Saved player updates</label>
+                </div>
+                <div class="verification-callout mt-4">
+                  <div>
+                    <h3 class="h6 fw-bold mb-1">Scout verification</h3>
+                    <p class="text-muted small mb-0">
+                      Status: {{ user.get_verification_status_display }}
+                      {% if latest_verification %} &middot; Last request {{ latest_verification.created_at|date:"M j, Y" }}{% endif %}
+                    </p>
+                  </div>
+                  {% if user.is_verified_account %}
+                    <span class="verified-pill"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                  {% elif user.verification_status == "pending" %}
+                    <span class="badge text-bg-light border p-2">Pending review</span>
+                  {% else %}
+                    <a href="{% url 'request_verification' %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-patch-check"></i>Request verification</a>
+                  {% endif %}
+                </div>
+              {% elif user.role == "club" %}
+                <div class="settings-stack">
+                  <label class="settings-check">{{ settings_form.club_trial_ready }} Show trial-ready leads first</label>
+                  <label class="settings-check">{{ settings_form.club_contact_alerts }} Contact request updates</label>
+                </div>
+                <div class="verification-callout mt-4">
+                  <div>
+                    <h3 class="h6 fw-bold mb-1">Club verification</h3>
+                    <p class="text-muted small mb-0">
+                      Status: {{ user.get_verification_status_display }}
+                      {% if latest_verification %} &middot; Last request {{ latest_verification.created_at|date:"M j, Y" }}{% endif %}
+                    </p>
+                  </div>
+                  {% if user.is_verified_account %}
+                    <span class="verified-pill"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                  {% elif user.verification_status == "pending" %}
+                    <span class="badge text-bg-light border p-2">Pending review</span>
+                  {% else %}
+                    <a href="{% url 'request_verification' %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-patch-check"></i>Request verification</a>
+                  {% endif %}
+                </div>
+              {% else %}
+                <p class="text-muted mb-0">Fan preferences will appear here as community features grow.</p>
+              {% endif %}
+
+              <button class="btn btn-primary mt-4 icon-btn" type="submit"><i class="bi bi-save"></i>Save preferences</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="tab-pane fade" id="security">
+        <div class="card border-0">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-4">Change Password</h2>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="password">
+              {% if password_form.non_field_errors %}
+                <div class="alert alert-danger">{{ password_form.non_field_errors }}</div>
+              {% endif %}
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Current password</label>
+                  {{ password_form.old_password|add_class:"form-control" }}
+                  {{ password_form.old_password.errors }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">New password</label>
+                  {{ password_form.new_password1|add_class:"form-control" }}
+                  {{ password_form.new_password1.errors }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Confirm new password</label>
+                  {{ password_form.new_password2|add_class:"form-control" }}
+                  {{ password_form.new_password2.errors }}
+                </div>
+              </div>
+              <button class="btn btn-primary mt-4 icon-btn" type="submit"><i class="bi bi-key"></i>Update password</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

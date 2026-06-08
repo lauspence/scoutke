@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Notifications - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="page-kicker">Inbox</div>
+    <h1 class="h3 fw-bold mb-1">Notifications</h1>
+    <p class="text-muted mb-0">Scouting updates, claims, confirmations, and shortlist activity.</p>
+  </div>
+  {% if unread_count %}
+    <form method="post" action="{% url 'mark_notifications_read' %}">
+      {% csrf_token %}
+      <button class="btn btn-outline-primary icon-btn" type="submit">
+        <i class="bi bi-check2-all" aria-hidden="true"></i>
+        <span>Mark all read</span>
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="surface-panel p-3 p-md-4">
+  <div class="notification-toolbar">
+    <div class="btn-group notification-filter" role="group" aria-label="Notification filters">
+      <a href="{% url 'notifications' %}?status=unread" class="btn {% if status == 'unread' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        Unread
+        {% if unread_count %}
+          <span class="badge text-bg-light ms-1">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'notifications' %}?status=all" class="btn {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        All
+        <span class="badge text-bg-light ms-1">{{ total_count }}</span>
+      </a>
+      <a href="{% url 'notifications' %}?status=read" class="btn {% if status == 'read' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        Read
+      </a>
+    </div>
+    <span class="small text-muted">Showing latest 50</span>
+  </div>
+
+  <div class="notification-list mt-3">
+    {% for notification in notifications %}
+      <div class="notification-item {% if not notification.is_read %}is-unread{% else %}is-read{% endif %}">
+        {% if notification.target_url %}
+          <a href="{% url 'open_notification' notification.id %}" class="notification-main">
+        {% else %}
+          <div class="notification-main">
+        {% endif %}
+          <span class="notification-state-dot" aria-hidden="true"></span>
+          <div class="notification-body">
+            <div class="notification-copy">
+              <strong>{{ notification.message }}</strong>
+              {% if not notification.is_read %}
+                <span class="badge text-bg-success">Unread</span>
+              {% endif %}
+            </div>
+            <div class="notification-meta">
+              <span>{{ notification.created_at|naturaltime }}</span>
+              {% if notification.actor %}
+                <span>From {{ notification.actor.username }}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% if notification.target_url %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
+        {% if not notification.is_read %}
+          <form method="post" action="{% url 'mark_notification_read' notification.id %}" class="notification-action">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-light icon-btn" type="submit" title="Mark read" aria-label="Mark notification read">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              <span>Read</span>
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="notification-empty">
+        {% if status == "unread" %}
+          You are all caught up.
+        {% elif status == "read" %}
+          No read notifications yet.
+        {% else %}
+          No notifications yet.
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

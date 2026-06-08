@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Verification - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Trust layer</p>
+    <h1 class="h3 fw-bold mb-1">Request Verification</h1>
+    <p class="text-muted mb-0">Help players and clubs know your scouting or club identity is real.</p>
+  </div>
+  <a href="{% url 'settings' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Settings</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label">Organization</label>
+            {{ form.organization_name }}
+            {{ form.organization_name.errors }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role and region</label>
+            {{ form.role_context }}
+            {{ form.role_context.errors }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Evidence</label>
+            {{ form.evidence }}
+            {{ form.evidence.errors }}
+          </div>
+          <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-send"></i>Send request</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">What staff review</h2>
+        <div class="settings-stack">
+          <div class="settings-check"><i class="bi bi-building-check text-success"></i> Club, academy, agency, or network identity</div>
+          <div class="settings-check"><i class="bi bi-person-vcard text-success"></i> Public role proof or trusted references</div>
+          <div class="settings-check"><i class="bi bi-geo-alt text-success"></i> Region and recruiting context</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

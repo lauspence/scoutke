@@ -1,0 +1,32 @@
+{% if onboarding and not onboarding.is_complete %}
+  <section class="onboarding-panel mb-4">
+    <div class="onboarding-panel__header">
+      <div>
+        <p class="page-kicker mb-1">Setup guide</p>
+        <h2 class="h5 fw-bold mb-1">Finish your ScoutKE launch</h2>
+        <p class="text-muted mb-0">{{ onboarding.completed }} of {{ onboarding.total }} steps complete.</p>
+      </div>
+      <span class="badge text-bg-success">{{ onboarding.percent }}%</span>
+    </div>
+    <div class="profile-progress my-3" aria-label="Onboarding progress">
+      <span style="width: {{ onboarding.percent }}%"></span>
+    </div>
+    <div class="onboarding-steps">
+      {% for step in onboarding.steps %}
+        <a href="{{ step.url }}" class="onboarding-step {% if step.done %}is-done{% endif %}">
+          <span class="onboarding-step__icon">
+            {% if step.done %}
+              <i class="bi bi-check2" aria-hidden="true"></i>
+            {% else %}
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            {% endif %}
+          </span>
+          <span>
+            <strong>{{ step.label }}</strong>
+            <small>{{ step.description }}</small>
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}

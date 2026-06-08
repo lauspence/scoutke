@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply - {{ opportunity.title }}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Player application</p>
+    <h1 class="h3 fw-bold mb-1">{{ opportunity.title }}</h1>
+    <p class="text-muted mb-0">{{ opportunity.location }}{% if opportunity.deadline %} &middot; Apply by {{ opportunity.deadline|date:"M j, Y" }}{% endif %}</p>
+  </div>
+  <a href="{% url 'opportunity_detail' opportunity.id %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Details</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post" class="card border-0">
+      <div class="card-body p-4">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <label class="form-label">Application message</label>
+        {{ form.message }}
+        {{ form.message.errors }}
+        <button class="btn btn-primary mt-4 icon-btn" type="submit"><i class="bi bi-send"></i>{% if existing %}Update application{% else %}Send application{% endif %}</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">Include the essentials</h2>
+        <div class="settings-stack">
+          <div class="settings-check"><i class="bi bi-person-badge text-success"></i> Position, age, region, and current team</div>
+          <div class="settings-check"><i class="bi bi-play-circle text-success"></i> Highlight links or recent match context</div>
+          <div class="settings-check"><i class="bi bi-calendar-check text-success"></i> Availability for the event or trial date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

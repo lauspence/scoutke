@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings   # ✅ instead of importing User directly
+from django.conf import settings
 
 class PlayerPost(models.Model):
     player_name = models.CharField(max_length=100)

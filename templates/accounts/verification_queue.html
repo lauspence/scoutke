@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Verification Queue - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Staff trust desk</p>
+    <h1 class="h3 fw-bold mb-1">Verification Queue</h1>
+    <p class="text-muted mb-0">Review scout and club requests before public trust badges appear.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="?status=pending" class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %}">Pending</a>
+    <a href="?status=approved" class="btn btn-sm {% if current_status == 'approved' %}btn-primary{% else %}btn-outline-primary{% endif %}">Approved</a>
+    <a href="?status=rejected" class="btn btn-sm {% if current_status == 'rejected' %}btn-primary{% else %}btn-outline-primary{% endif %}">Rejected</a>
+    <a href="?status=all" class="btn btn-sm {% if current_status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for item in verification_requests %}
+    <div class="col-12">
+      <div class="card border-0">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div>
+              <h2 class="h5 fw-bold mb-1">
+                {{ item.user.username }}
+                <span class="badge text-bg-light border text-capitalize">{{ item.user.role }}</span>
+              </h2>
+              <p class="text-muted mb-1">{{ item.organization_name }} &middot; {{ item.role_context }}</p>
+              <p class="text-muted small mb-0">Submitted {{ item.created_at|naturaltime }}</p>
+            </div>
+            <span class="badge text-bg-light border align-self-start p-2">{{ item.get_status_display }}</span>
+          </div>
+
+          <div class="surface-panel p-3 mt-3">
+            <p class="mb-0">{{ item.evidence|linebreaksbr }}</p>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+            <div class="text-muted small">
+              {% if item.reviewed_by %}
+                Reviewed by {{ item.reviewed_by.username }} {{ item.reviewed_at|naturaltime }}
+              {% else %}
+                Awaiting staff decision
+              {% endif %}
+            </div>
+            {% if item.status == "pending" %}
+              <div class="d-flex gap-2">
+                <form method="post" action="{% url 'review_verification_request' item.id 'reject' %}">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger btn-sm icon-btn" type="submit"><i class="bi bi-x-circle"></i>Reject</button>
+                </form>
+                <form method="post" action="{% url 'review_verification_request' item.id 'approve' %}">
+                  {% csrf_token %}
+                  <button class="btn btn-primary btn-sm icon-btn" type="submit"><i class="bi bi-patch-check"></i>Approve</button>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="card border-0">
+        <div class="card-body p-4 text-center">
+          <i class="bi bi-patch-check display-5 text-success"></i>
+          <h2 class="h5 fw-bold mt-3">No requests here</h2>
+          <p class="text-muted mb-0">This queue is clear for the selected status.</p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ spot.prospect_name }} - Talent Spot{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <article class="card border-0">
+      {% if spot.evidence_image %}
+        <img src="{{ spot.evidence_image.url }}" class="card-img-top" alt="{{ spot.prospect_name }}">
+      {% else %}
+        <img src="{% static 'img/tuskeryouth.jpg' %}" class="card-img-top" alt="Kenyan youth footballers">
+      {% endif %}
+      <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+          <div>
+            <span class="badge text-bg-light border mb-2">{{ spot.get_status_display }}</span>
+            <h1 class="h3 fw-bold mb-1">{{ spot.prospect_name }}</h1>
+            <p class="text-muted mb-0">
+              {{ spot.get_position_display }}{% if spot.age_estimate %} &middot; approx {{ spot.age_estimate }}{% endif %}
+            </p>
+          </div>
+          <div class="text-end small text-muted">
+            <div>{{ spot.created_at|naturaltime }}</div>
+            <div>Spotted by {{ spot.spotted_by.username }}</div>
+          </div>
+        </div>
+
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Location</dt>
+          <dd class="col-sm-8">{{ spot.location }}</dd>
+          {% if spot.event_name %}
+            <dt class="col-sm-4">Event</dt>
+            <dd class="col-sm-8">{{ spot.event_name }}</dd>
+          {% endif %}
+          {% if spot.team_or_school %}
+            <dt class="col-sm-4">Team / school</dt>
+            <dd class="col-sm-8">{{ spot.team_or_school }}</dd>
+          {% endif %}
+          {% if spot.linked_player %}
+            <dt class="col-sm-4">Linked profile</dt>
+            <dd class="col-sm-8">
+              <a href="{% url 'view_profile' spot.linked_player.user.id %}">{{ spot.linked_player.user.username }}</a>
+            </dd>
+          {% endif %}
+        </dl>
+
+        <h2 class="h5 fw-bold mt-4">Observation</h2>
+        <p class="mb-0">{{ spot.notes }}</p>
+
+        {% if spot.evidence_video %}
+          <div class="ratio ratio-16x9 mt-3">
+            <video controls>
+              <source src="{{ spot.evidence_video.url }}" type="video/mp4">
+            </video>
+          </div>
+        {% endif %}
+      </div>
+      <div class="card-footer border-0 action-row">
+        <div>
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'confirm_talent_spot' spot.id %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-success icon-btn" type="submit">
+                <i class="bi bi-check2-circle"></i>Confirm sighting ({{ spot.confirmation_count }})
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-success icon-btn"><i class="bi bi-box-arrow-in-right"></i>Log in to confirm</a>
+          {% endif %}
+        </div>
+
+        <div class="post-action-group justify-content-end">
+          {% if can_verify_spot %}
+            <form method="post" action="{% url 'verify_talent_spot' spot.id %}">
+              {% csrf_token %}
+              <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-patch-check"></i>Verify</button>
+            </form>
+          {% endif %}
+          {% if user.is_authenticated and user.role == "scout" %}
+            <a href="{% url 'create_scout_report' spot.id %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-clipboard2-pulse"></i>Write Report</a>
+          {% endif %}
+          {% if user.is_authenticated and user.role == "club" %}
+            {% if club_shortlist_entry %}
+              <a href="{% url 'club_shortlist' %}" class="btn btn-success icon-btn"><i class="bi bi-bookmark-check"></i>Shortlisted</a>
+            {% else %}
+              <form method="post" action="{% url 'add_to_shortlist' spot.id %}">
+                {% csrf_token %}
+                <button class="btn btn-success icon-btn" type="submit"><i class="bi bi-bookmark-plus"></i>Shortlist</button>
+              </form>
+            {% endif %}
+            {% if spot.linked_player %}
+              {% if existing_contact_request %}
+                <a href="{% url 'contact_requests' %}" class="btn btn-outline-success icon-btn"><i class="bi bi-envelope-check"></i>{{ existing_contact_request.get_status_display }}</a>
+              {% else %}
+                <a href="{% url 'create_contact_request' spot.id %}" class="btn btn-outline-success icon-btn"><i class="bi bi-envelope"></i>Contact</a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+          {% if user.is_authenticated and user.role == "player" and not spot.linked_player %}
+            <a href="{% url 'claim_talent_spot' spot.id %}" class="btn btn-outline-success icon-btn">
+              <i class="bi bi-patch-question"></i>{% if user_claim %}{{ user_claim.get_status_display }}{% else %}Claim{% endif %}
+            </a>
+          {% endif %}
+          <a href="{% url 'talent_spots' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Back</a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'report_talent_spot' spot.id %}" class="btn btn-outline-danger icon-btn"><i class="bi bi-flag"></i>Report</a>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+
+    <section class="card border-0 mt-4">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 fw-bold mb-0">Scout Reports</h2>
+          {% if user.is_authenticated and user.role == "scout" %}
+            <a href="{% url 'create_scout_report' spot.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-plus-circle"></i>Add Report</a>
+          {% endif %}
+        </div>
+        {% for report in scout_reports %}
+          <article class="border-top pt-3 mt-3">
+            <div class="d-flex flex-wrap justify-content-between gap-2">
+              <div>
+                <strong>{{ report.scout.username }}</strong>
+                <span class="badge text-bg-light border ms-2">{{ report.get_recommendation_display }}</span>
+              </div>
+              <span class="fw-semibold">Avg {{ report.average_score }}/10</span>
+            </div>
+            <div class="row g-2 small text-muted my-2">
+              <div class="col-6 col-md">Tech {{ report.technical }}</div>
+              <div class="col-6 col-md">Phys {{ report.physical }}</div>
+              <div class="col-6 col-md">Tact {{ report.tactical }}</div>
+              <div class="col-6 col-md">Mind {{ report.mentality }}</div>
+              <div class="col-6 col-md">Pot {{ report.potential }}</div>
+            </div>
+            <p class="mb-0">{{ report.summary }}</p>
+          </article>
+        {% empty %}
+          <div class="empty-state">
+            <i class="bi bi-clipboard2-pulse display-6" aria-hidden="true"></i>
+            <p class="mb-0">No scout reports yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if can_verify_spot and claims %}
+      <section class="card border-0 mt-4">
+        <div class="card-body p-4">
+          <h2 class="h5 fw-bold mb-3">Player Claims</h2>
+          {% for claim in claims %}
+            <div class="border-top pt-3 mt-3">
+              <div class="d-flex flex-wrap justify-content-between gap-2">
+                <div>
+                  <strong>{{ claim.player.username }}</strong>
+                  <span class="badge text-bg-light border ms-2">{{ claim.get_status_display }}</span>
+                </div>
+                {% if claim.status == "pending" %}
+                  <div class="action-row justify-content-start">
+                    <form method="post" action="{% url 'review_talent_spot_claim' claim.id 'approve' %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-success" type="submit">Approve</button>
+                    </form>
+                    <form method="post" action="{% url 'review_talent_spot_claim' claim.id 'reject' %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+              <p class="mb-0 mt-2">{{ claim.message }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="card border-0 mb-3">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">Lead Snapshot</h2>
+        <dl class="row mb-0">
+          <dt class="col-6">Confirmations</dt>
+          <dd class="col-6 text-end">{{ spot.confirmation_count }}</dd>
+          <dt class="col-6">Reports</dt>
+          <dd class="col-6 text-end">{{ scout_reports|length }}</dd>
+          <dt class="col-6">Claims</dt>
+          <dd class="col-6 text-end">{{ claims|length }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <h2 class="h5 fw-bold">Related spots</h2>
+        {% for related in related_spots %}
+          <a href="{% url 'talent_spot_detail' related.id %}" class="list-link">
+            <strong>{{ related.prospect_name }}</strong>
+            <span class="d-block text-muted small">{{ related.location }} &middot; {{ related.get_status_display }}</span>
+          </a>
+        {% empty %}
+          <p class="text-muted mb-0">No related spots yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

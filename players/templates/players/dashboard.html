@@ -1,207 +1,294 @@
-  {% extends 'base.html' %}
-  {% load static %}
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
 
-  {% block content %}
-  <div class="container mt-4">
-    <div class="row g-4">
-      
-      <!-- Left Column: Profile Summary -->
-      <div class="col-lg-3">
-        <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
-          <div class="card-body text-center">
-            <!-- Profile picture -->
-            {% if request.user.profile_picture %}
-              <img src="{{ request.user.profile_picture.url }}" 
-                  class="rounded-circle shadow-sm mb-3" 
-                  width="100" height="100" alt="Profile Picture">
-            {% else %}
-              <img src="{% static 'img/default-avatar.png' %}" 
-                  class="rounded-circle shadow-sm mb-3" 
-                  width="100" height="100" alt="Default Avatar">
-            {% endif %}
+{% block title %}Player Dashboard - ScoutKE{% endblock %}
 
-            <!-- Username / role -->
-            <h5 class="fw-bold">{{ user.username }}</h5>
-            <p class="text-muted small mb-2">{{ user.email }}</p>
-            <span class="badge bg-primary text-capitalize mb-3">{{ user.role }}</span>
-
-            <!-- Followers / Following -->
-            <div class="d-flex justify-content-between my-3">
-              <a href="{% url 'followers_list' user.id %}" 
-                class="text-decoration-none text-dark w-50 me-1 text-center hover-shadow p-2 rounded border">
-                <h6 class="mb-0">{{ user.followers.count }}</h6>
-                <small class="text-muted">Followers</small>
-              </a>
-              <a href="{% url 'following_list' user.id %}" 
-                class="text-decoration-none text-dark w-50 ms-1 text-center hover-shadow p-2 rounded border">
-                <h6 class="mb-0">{{ user.following.count }}</h6>
-                <small class="text-muted">Following</small>
-              </a>
-            </div>
-
-            <!-- Mini profile summary -->
-            {% if user.player_profile %}
-              {% comment %} <div class="text-start small mt-3">
-                <div><strong>Position:</strong> {{ user.player_profile.position|default:"—" }}</div>
-                <div><strong>Club:</strong> {{ user.player_profile.current_club|default:"—" }}</div>
-                <div><strong>Height:</strong> 
-                  {% if user.player_profile.height_cm %}{{ user.player_profile.height_cm }} cm{% else %}—{% endif %}
-                </div>
-                <div><strong>Foot:</strong> {{ user.player_profile.preferred_foot|capfirst|default:"—" }}</div>
-              </div> {% endcomment %}
-              <a href="{% url 'view_profile' user.id %}" 
-                class="btn btn-outline-primary btn-sm w-100 mt-3">👤 View Full Profile</a>
-            {% else %}
-              <p class="text-muted small mt-3">No player profile created yet.</p>
-              <a href="{% url 'update_profile' %}" 
-                class="btn btn-outline-primary btn-sm w-100">+ Create Profile</a>
-            {% endif %}
-
-            <!-- Stats -->
-            {% if user.role == "player" or user.role == "scout" or user.role == "club" %}
-              <a href="{% url 'view_profile' user.id %}#stats" 
-                class="btn btn-outline-secondary btn-sm w-100 mt-2">📊 View Stats</a>
-            {% endif %}
-          </div>
-        </div>
+{% block content %}
+<section class="player-command mb-4">
+  <div class="player-command__profile">
+    {% if request.user.profile_picture %}
+      <img src="{{ request.user.profile_picture.url }}" class="rounded-circle avatar" width="96" height="96" alt="{{ user.username }}">
+    {% else %}
+      <img src="{% static 'img/default-avatar.svg' %}" class="rounded-circle avatar" width="96" height="96" alt="{{ user.username }}">
+    {% endif %}
+    <div>
+      <p class="page-kicker mb-1">Player command center</p>
+      <h1 class="h3 fw-bold mb-1">{{ user.username }}</h1>
+      <p class="mb-2">
+        {% if player_profile.position %}{{ player_profile.position }}{% else %}Position not added{% endif %}
+        {% if player_profile.current_club %} &middot; {{ player_profile.current_club }}{% endif %}
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'view_profile' user.id %}" class="btn btn-light btn-sm icon-btn"><i class="bi bi-person-badge"></i>View Profile</a>
+        <a href="{% url 'scout_card' user.id %}" class="btn btn-light btn-sm icon-btn"><i class="bi bi-share"></i>Scout Card</a>
+        <a href="{% url 'update_profile' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-pencil-square"></i>Edit Profile</a>
+        <a href="{% url 'talent_radar' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-radar"></i>Talent Radar</a>
+        <a href="{% url 'my_opportunity_applications' %}" class="btn btn-outline-light btn-sm icon-btn"><i class="bi bi-send"></i>Applications</a>
       </div>
-
-      <!-- Middle Column: AJAX Feed -->
-      <div class="col-lg-6">
-        {% include "posts/feeds.html" with form=form posts=posts %}
-      </div>
-
-      <!-- Right Column: Suggestions / Trends / Recommended -->
-      <div class="col-lg-3">
-
-        <!-- Scouts Following You -->
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-body">
-            <h6 class="fw-bold mb-3">👀 Scouts Following You</h6>
-            <ul class="list-unstyled">
-              {% for scout in scouts_following %}
-              <li class="mb-2 d-flex align-items-center">
-                <img src="{% if scout.profile_picture %}{{ scout.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
-                    class="rounded-circle me-2" width="35" height="35">
-                <span>{{ scout.username }}</span>
-              </li>
-              {% empty %}
-              <li class="text-muted small">No scouts yet.</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-
-        <!-- Trending Players -->
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-body">
-            <h6 class="fw-bold mb-3">🔥 Trending Players</h6>
-            <ul class="list-unstyled small">
-              {% for player in trending_players %}
-                <li class="mb-2">⚡ {{ player.username }} – {{ player.stats_summary }}</li>
-              {% empty %}
-                <li class="text-muted small">No trending players yet.</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-
-        <!-- Recommended Users to Follow -->
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-body">
-            <h6 class="fw-bold mb-3">🌟 Recommended to Follow</h6>
-            <ul class="list-unstyled">
-              {% for rec_user in recommended_users %}
-              <li class="mb-2 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <img src="{% if rec_user.profile_picture %}{{ rec_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
-                      class="rounded-circle me-2" width="35" height="35">
-                  <span>{{ rec_user.username }} ({{ rec_user.role|title }})</span>
-                </div>
-                <button 
-                  class="btn btn-sm btn-primary follow-btn"
-                  data-url="{% url 'follow_user' rec_user.id %}">
-                  {% if rec_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
-                </button>
-              </li>
-              {% empty %}
-              <li class="text-muted small">No recommendations yet.</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-
-        <!-- Search Users -->
-        <div class="card shadow-sm border-0">
-          <div class="card-body">
-            <h6 class="fw-bold mb-3">🔍 Search Users</h6>
-            <form method="get">
-              <div class="input-group mb-2">
-                <input type="text" name="q" class="form-control" placeholder="Search by username or role" value="{{ search_query }}">
-                <button class="btn btn-primary" type="submit">Search</button>
-              </div>
-            </form>
-            {% if search_results %}
-            <ul class="list-unstyled">
-              {% for search_user in search_results %}
-              <li class="mb-2 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <img src="{% if search_user.profile_picture %}{{ search_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
-                      class="rounded-circle me-2" width="35" height="35">
-                  <span>{{ search_user.username }} ({{ search_user.role|title }})</span>
-                </div>
-                <button 
-                  class="btn btn-sm btn-primary follow-btn"
-                  data-url="{% url 'follow_user' search_user.id %}">
-                  {% if search_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
-                </button>
-              </li>
-              {% endfor %}
-            </ul>
-            {% elif search_query %}
-            <p class="text-muted small">No users found.</p>
-            {% endif %}
-          </div>
-        </div>
-
-      </div>
-
     </div>
   </div>
 
-  <style>
-  .hover-shadow:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: 0.3s;
-  }
-  </style>
+  <div class="player-command__stats">
+    <a href="{% url 'followers_list' user.id %}" class="player-stat">
+      <strong>{{ user.followers.count }}</strong>
+      <span>Followers</span>
+    </a>
+    <a href="{% url 'following_list' user.id %}" class="player-stat">
+      <strong>{{ user.following.count }}</strong>
+      <span>Following</span>
+    </a>
+    <a href="{% url 'view_profile' user.id %}#stats" class="player-stat">
+      <strong>{{ player_profile.matches_played|default:0 }}</strong>
+      <span>Matches</span>
+    </a>
+    <a href="{% url 'view_profile' user.id %}" class="player-stat">
+      <strong>{{ talent_score }}</strong>
+      <span>Talent Score</span>
+    </a>
+  </div>
+</section>
 
-  <!-- AJAX Script for Follow/Unfollow -->
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".follow-btn").forEach(button => {
-          button.addEventListener("click", function(e) {
-              e.preventDefault();
-              const url = this.dataset.url;
-              const btn = this;
+{% include "partials/onboarding_checklist.html" %}
 
-              fetch(url, {
-                  method: "POST",
-                  headers: {
-                      "X-Requested-With": "XMLHttpRequest",
-                      "X-CSRFToken": "{{ csrf_token }}"
-                  }
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.action) {
-                      btn.textContent = data.action === "followed" ? "Unfollow" : "Follow";
-                  }
-              })
-              .catch(error => console.error("Error:", error));
-          });
-      });
+<div class="row g-4">
+  <aside class="col-xl-3 col-lg-4">
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <div class="talent-score-ring mb-3" style="--score: {{ talent_score }};">
+          <strong>{{ talent_score }}</strong>
+          <span>Talent Score</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 fw-bold mb-0">Profile Strength</h2>
+          <span class="badge text-bg-success">{{ profile_completion }}%</span>
+        </div>
+        <div class="profile-progress mb-3" aria-label="Profile completion">
+          <span style="width: {{ profile_completion }}%"></span>
+        </div>
+        {% if profile_next_steps %}
+          <p class="text-muted small mb-2">Next best steps</p>
+          <ul class="small mb-3 ps-3">
+            {% for step in profile_next_steps %}
+              <li>{{ step }}</li>
+            {% endfor %}
+          </ul>
+          <a href="{% url 'update_profile' %}" class="btn btn-sm btn-primary w-100 icon-btn justify-content-center"><i class="bi bi-lightning-charge"></i>Improve Profile</a>
+        {% else %}
+          <p class="text-muted small mb-0">Your player profile is in strong shape for scouts and clubs.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-eye me-1"></i>Scout Attention</h2>
+        <p class="text-muted small">{{ profile_view_count }} scout/club profile views recorded.</p>
+        {% for scout in scouts_following %}
+          <a href="{% url 'view_profile' scout.id %}" class="d-flex align-items-center text-decoration-none text-dark mb-3">
+            <img src="{% if scout.profile_picture %}{{ scout.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" class="rounded-circle avatar me-2" width="38" height="38" alt="{{ scout.username }}">
+            <div>
+              <strong class="small">{{ scout.username }}</strong>
+              <div class="text-muted small">Scout following you</div>
+            </div>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-3">No scouts are following you yet. A complete profile and highlights help.</p>
+          <a href="{% url 'talent_radar' %}" class="btn btn-sm btn-outline-primary w-100">Get on the radar</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-binoculars me-1"></i>Recent Profile Views</h2>
+        {% for view in recent_profile_views %}
+          <div class="d-flex justify-content-between border-top pt-2 mt-2">
+            <span class="small fw-bold">{{ view.viewer.username }} <span class="text-muted">({{ view.viewer.role|title }})</span></span>
+            <span class="text-muted small">{{ view.last_viewed_at|naturaltime }}</span>
+          </div>
+        {% empty %}
+          <p class="text-muted small mb-0">No scout or club profile views yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-trophy me-1"></i>Trending Players</h2>
+        {% for player in trending_players %}
+          <a href="{% url 'view_profile' player.id %}" class="d-flex justify-content-between text-decoration-none text-dark border-top pt-2 mt-2">
+            <span class="small fw-bold">{{ player.username }}</span>
+            <span class="text-muted small">{{ player.followers_count }} followers</span>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-0">No trending players yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+
+  <div class="col-xl-6 col-lg-8">
+    <div class="section-header">
+      <div>
+        <p class="page-kicker mb-1">Your network</p>
+        <h2 class="h4 fw-bold mb-0">Player Feed</h2>
+      </div>
+      <a href="{% url 'create_talent_spot' %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-crosshair"></i>Submit Spot</a>
+    </div>
+    {% include "posts/feeds.html" with form=form posts=posts comment_form=comment_form %}
+  </div>
+
+  <aside class="col-xl-3 col-lg-12">
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-envelope me-1"></i>Club Opportunities</h2>
+        {% for request_item in contact_requests %}
+          <a href="{% url 'contact_requests' %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong class="small">{{ request_item.club.username }}</strong>
+              <span class="badge text-bg-light border">{{ request_item.get_status_display }}</span>
+            </div>
+            <p class="text-muted small mb-0">{{ request_item.message|truncatechars:90 }}</p>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-3">No club contact requests yet.</p>
+          <a href="{% url 'view_profile' user.id %}" class="btn btn-sm btn-outline-primary w-100">Preview scout view</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-calendar2-week me-1"></i>Opportunity Board</h2>
+        {% for opportunity in recommended_opportunities %}
+          <a href="{% url 'opportunity_detail' opportunity.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong class="small">{{ opportunity.title }}</strong>
+              <span class="badge text-bg-success">{{ opportunity.match_score }}</span>
+            </div>
+            <div class="text-muted small">{{ opportunity.location }}{% if opportunity.deadline %} &middot; Apply by {{ opportunity.deadline|date:"M j" }}{% endif %}</div>
+            <div class="d-flex flex-wrap gap-1 mt-2">
+              {% for reason in opportunity.match_reasons %}
+                <span class="badge text-bg-light border">{{ reason }}</span>
+              {% endfor %}
+            </div>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-3">Track applications and discover trials, academy intakes, and scholarships.</p>
+        {% endfor %}
+        <div class="d-grid gap-2 mt-3">
+          <a href="{% url 'opportunities' %}" class="btn btn-sm btn-primary">Browse opportunities</a>
+          <a href="{% url 'saved_opportunities' %}" class="btn btn-sm btn-outline-primary">Saved opportunities</a>
+          <a href="{% url 'my_opportunity_applications' %}" class="btn btn-sm btn-outline-primary">My applications</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-crosshair me-1"></i>Your Radar Links</h2>
+        {% for spot in linked_spots %}
+          <a href="{% url 'talent_spot_detail' spot.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <strong class="small">{{ spot.prospect_name }}</strong>
+            <div class="text-muted small">{{ spot.location }} &middot; {{ spot.get_status_display }}</div>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-3">No talent spots are linked to your profile yet.</p>
+          <a href="{% url 'talent_spots' %}" class="btn btn-sm btn-outline-primary w-100">Browse Talent Spots</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-patch-question me-1"></i>Spot Claims</h2>
+        {% for claim in player_claims %}
+          <a href="{% url 'talent_spot_detail' claim.talent_spot.id %}" class="d-block text-decoration-none text-dark border-top pt-3 mt-3">
+            <div class="d-flex justify-content-between gap-2">
+              <strong class="small">{{ claim.talent_spot.prospect_name }}</strong>
+              <span class="badge text-bg-light border">{{ claim.get_status_display }}</span>
+            </div>
+            <div class="text-muted small">{{ claim.created_at|naturaltime }}</div>
+          </a>
+        {% empty %}
+          <p class="text-muted small mb-0">No spot claims yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-plus me-1"></i>Recommended</h2>
+        {% for rec_user in recommended_users %}
+          <div class="d-flex align-items-center justify-content-between gap-2 border-top pt-3 mt-3">
+            <a href="{% url 'view_profile' rec_user.id %}" class="d-flex align-items-center text-decoration-none text-dark">
+              <img src="{% if rec_user.profile_picture %}{{ rec_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" class="rounded-circle avatar me-2" width="35" height="35" alt="{{ rec_user.username }}">
+              <span class="small">{{ rec_user.username }} ({{ rec_user.role|title }})</span>
+            </a>
+            <button class="btn btn-sm btn-outline-primary follow-btn" data-url="{% url 'follow_user' rec_user.id %}">
+              {% if rec_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
+            </button>
+          </div>
+        {% empty %}
+          <p class="text-muted small mb-0">No recommendations yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+
+{% if search_query %}
+  <section class="mt-4">
+    <div class="section-header">
+      <div>
+        <p class="page-kicker mb-1">Search results</p>
+        <h2 class="h5 fw-bold mb-0">Users matching "{{ search_query }}"</h2>
+      </div>
+    </div>
+    <div class="row g-3">
+      {% for search_user in search_results %}
+        <div class="col-md-4">
+          <div class="stat-tile d-flex align-items-center justify-content-between gap-2">
+            <a href="{% url 'view_profile' search_user.id %}" class="d-flex align-items-center text-decoration-none text-dark">
+              <img src="{% if search_user.profile_picture %}{{ search_user.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" class="rounded-circle avatar me-2" width="35" height="35" alt="{{ search_user.username }}">
+              <span class="small">{{ search_user.username }} ({{ search_user.role|title }})</span>
+            </a>
+            <button class="btn btn-sm btn-outline-primary follow-btn" data-url="{% url 'follow_user' search_user.id %}">
+              {% if search_user in user.following.all %}Unfollow{% else %}Follow{% endif %}
+            </button>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12"><div class="surface-panel p-4 text-center text-muted">No users found.</div></div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("click", function(e) {
+    const button = e.target.closest(".follow-btn");
+    if (!button) {
+      return;
+    }
+    e.preventDefault();
+    fetch(button.dataset.url, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": "{{ csrf_token }}"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.action) {
+        button.textContent = data.action === "followed" ? "Unfollow" : "Follow";
+      }
+    })
+    .catch(error => console.error("Error:", error));
   });
-  </script>
-
-  {% endblock %}
+});
+</script>
+{% endblock %}

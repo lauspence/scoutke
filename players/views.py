@@ -4,9 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse, HttpResponseBadRequest
-from django.db.models import Q, Count
+from django.db.models import Count, F, Q
+from accounts.models import UserSettings
+from accounts.onboarding import onboarding_context
 from posts.forms import *
-from posts.models import Post
+from posts.models import ContactRequest, TalentSpot, TalentSpotClaim
+from posts.selectors import create_talent_spot_from_post, posts_for_user, recommended_opportunities_for_player
 from .models import *
 from .forms import *
 
@@ -30,7 +33,8 @@ def player_dashboard(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-            messages.success(request, "✅ Post created successfully!")
+            create_talent_spot_from_post(post)
+            messages.success(request, "Post created successfully.")
             return redirect("dashboard")
     else:
         form = PostForm()
@@ -38,27 +42,34 @@ def player_dashboard(request):
     # Following/followers & feed
     following_users = request.user.following.all()
 
-    if request.user.role == 'player':
-        posts = Post.objects.filter(
-            Q(author=request.user) | Q(author__in=following_users)
-        ).order_by('-created_at')
-    elif request.user.role == 'scout':
-        posts = Post.objects.filter(
-            author__role='player',
-            author__in=following_users
-        ).order_by('-created_at')
-    elif request.user.role == 'club':
-        posts = Post.objects.filter(
-            Q(author__role='player') | Q(author__role='scout')
-        ).order_by('-created_at')
-    else:
-        posts = Post.objects.none()
+    posts = posts_for_user(request.user)
 
     # Suggestions & trending
     scouts_following = request.user.followers.filter(role='scout')[:5]
     trending_players = User.objects.filter(role='player').annotate(
-        last_post=Count('posts')
-    ).order_by('-last_post')[:5]
+        post_count=Count('posts', distinct=True),
+        followers_count=Count('followers', distinct=True),
+    ).order_by('-post_count', '-followers_count')[:5]
+
+    profile_next_steps = []
+    if not player_profile.full_name:
+        profile_next_steps.append("Add your full name")
+    if not player_profile.position:
+        profile_next_steps.append("Choose your position")
+    if not player_profile.current_club:
+        profile_next_steps.append("Add your current club or school")
+    if not player_profile.highlight_video:
+        profile_next_steps.append("Add a highlight video link")
+    if not player_profile.bio:
+        profile_next_steps.append("Write a short football bio")
+
+    contact_requests = ContactRequest.objects.filter(player=request.user).select_related("club", "talent_spot")[:3]
+    player_claims = TalentSpotClaim.objects.filter(player=request.user).select_related("talent_spot")[:3]
+    linked_spots = TalentSpot.objects.filter(linked_player=player_profile).select_related("spotted_by")[:3]
+    recommended_opportunities = recommended_opportunities_for_player(player_profile, limit=3)
+    scout_profile_views = player_profile.profile_views.filter(viewer__role="scout").select_related("viewer")[:5]
+    club_profile_views = player_profile.profile_views.filter(viewer__role="club").select_related("viewer")[:5]
+    recent_profile_views = player_profile.profile_views.select_related("viewer")[:5]
 
     recommended_users = User.objects.exclude(id__in=following_users).exclude(id=request.user.id)
     recommended_users = recommended_users.annotate(followers_count=Count('followers')).order_by('-followers_count')[:5]
@@ -75,12 +86,25 @@ def player_dashboard(request):
     context = {
         "form": form,
         "posts": posts,
-        "player_profile": player_profile,  # ✅ added
+        "comment_form": CommentForm(),
+        "player_profile": player_profile,
         "scouts_following": scouts_following,
         "trending_players": trending_players,
         "recommended_users": recommended_users,
         "search_query": search_query,
         "search_results": search_results,
+        "profile_completion": player_profile.completion_percent,
+        "talent_score": player_profile.talent_score,
+        "profile_next_steps": profile_next_steps[:4],
+        "contact_requests": contact_requests,
+        "player_claims": player_claims,
+        "linked_spots": linked_spots,
+        "recommended_opportunities": recommended_opportunities,
+        "scout_profile_views": scout_profile_views,
+        "club_profile_views": club_profile_views,
+        "recent_profile_views": recent_profile_views,
+        "profile_view_count": player_profile.profile_views.count(),
+        "onboarding": onboarding_context(request.user),
     }
 
     return render(request, "players/dashboard.html", context)
@@ -101,9 +125,32 @@ def view_profile(request, user_id):
 
     profile_user = get_object_or_404(User, id=user_id)
     profile = getattr(profile_user, "player_profile", None)
+    profile_settings, _ = UserSettings.objects.get_or_create(user=profile_user)
+
+    if request.user != profile_user:
+        if profile_settings.profile_visibility == UserSettings.PROFILE_SCOUTS_CLUBS:
+            if getattr(request.user, "role", None) not in ("scout", "club") and not request.user.is_staff:
+                messages.info(request, "This profile is visible to scouts and clubs only.")
+                return redirect("feed")
+
+    if (
+        profile
+        and request.user != profile_user
+        and getattr(request.user, "role", None) in ("scout", "club")
+    ):
+        profile_view, created = ProfileView.objects.get_or_create(
+            player=profile,
+            viewer=request.user,
+        )
+        if not created:
+            profile_view.view_count = F("view_count") + 1
+            profile_view.save(update_fields=["view_count", "last_viewed_at"])
 
     # Who can see detailed stats?
-    show_stats = (request.user == profile_user) or (getattr(request.user, "role", None) in ("scout", "club"))
+    show_stats = (
+        request.user == profile_user
+        or (profile_settings.show_stats and getattr(request.user, "role", None) in ("scout", "club"))
+    )
 
     # Posts and media
     posts = Post.objects.filter(author=profile_user).order_by("-created_at")
@@ -139,8 +186,42 @@ def view_profile(request, user_id):
         "comment_form": comment_form,
         "embed_link": embed_link,
         "video_type": video_type,
+        "talent_score": profile.talent_score if profile else 0,
+        "profile_view_count": profile.profile_views.count() if profile else 0,
+        "recent_profile_views": profile.profile_views.select_related("viewer")[:5] if profile else [],
+        "show_email": profile_settings.show_email or request.user == profile_user,
     }
     return render(request, "players/view_profile.html", context)
+
+
+def scout_card(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id, role="player")
+    profile = getattr(profile_user, "player_profile", None)
+    profile_settings, _ = UserSettings.objects.get_or_create(user=profile_user)
+
+    if profile_settings.profile_visibility == UserSettings.PROFILE_SCOUTS_CLUBS:
+        if not request.user.is_authenticated or (
+            getattr(request.user, "role", None) not in ("scout", "club") and not request.user.is_staff and request.user != profile_user
+        ):
+            messages.info(request, "This scout card is visible to scouts and clubs only.")
+            return redirect("feed")
+
+    public_url = request.build_absolute_uri()
+    stats = {
+        "matches": profile.matches_played if profile else 0,
+        "goals": profile.goals if profile else 0,
+        "assists": profile.assists if profile else 0,
+        "followers": profile_user.followers.count(),
+    }
+
+    return render(request, "players/scout_card.html", {
+        "profile_user": profile_user,
+        "profile": profile,
+        "public_url": public_url,
+        "stats": stats,
+        "talent_score": profile.talent_score if profile else 0,
+        "profile_completion": profile.completion_percent if profile else 0,
+    })
 
 
 
@@ -169,10 +250,13 @@ def follow_user(request, user_id):
         target_user.followers.add(current_user)
         action = "followed"
 
-    return JsonResponse({
-        "action": action,
-        "followers_count": target_user.followers.count()
-    })
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "action": action,
+            "followers_count": target_user.followers.count()
+        })
+
+    return redirect(request.META.get("HTTP_REFERER", "dashboard"))
 
 
 # -------------------------
@@ -208,22 +292,18 @@ def update_profile(request):
             saved_profile = form.save(commit=False)
             saved_profile.user = request.user
             saved_profile.save()
-            messages.success(request, "✅ Profile saved successfully.")
-
-            # Debug: confirm what was saved
-            print("✅ Profile updated successfully for:", request.user.username)
-            print("Cleaned Data:", form.cleaned_data)
+            if saved_profile.profile_picture:
+                request.user.profile_picture = saved_profile.profile_picture
+                request.user.save(update_fields=["profile_picture"])
+            elif request.POST.get("profile_picture-clear"):
+                request.user.profile_picture = None
+                request.user.save(update_fields=["profile_picture"])
+            messages.success(request, "Profile saved successfully.")
 
             return redirect("view_profile", user_id=request.user.id)
         else:
-            # Debugging
-            print("❌ Profile update failed for:", request.user.username)
-            print("Form errors (JSON):", form.errors.as_json())
-            print("Form data received:", request.POST.dict())
-            print("Files received:", request.FILES)
-
-            messages.error(request, "❌ Please correct the errors below.")
+            messages.error(request, "Please correct the errors below.")
     else:
         form = PlayerProfileForm(instance=profile)
 
-    return render(request, "players/update_profile.html", {"form": form})
+    return render(request, "players/update_profile.html", {"form": form, "profile": profile})

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Opportunities - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Opportunity shortlist</p>
+    <h1 class="h3 fw-bold mb-1">Saved Opportunities</h1>
+    <p class="text-muted mb-0">Keep trials, open days, and scholarships you want to review later.</p>
+  </div>
+  <a href="{% url 'opportunities' %}" class="btn btn-primary icon-btn"><i class="bi bi-calendar2-week"></i>Browse board</a>
+</div>
+
+<div class="row g-3">
+  {% for opportunity in opportunities %}
+    <div class="col-md-6 col-xl-4">
+      <article class="card border-0 h-100 opportunity-card">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between gap-2 mb-3">
+            <span class="badge text-bg-success">{{ opportunity.get_opportunity_type_display }}</span>
+            {% if opportunity.is_open %}
+              <span class="badge text-bg-light border">Open</span>
+            {% else %}
+              <span class="badge text-bg-light border">Closed</span>
+            {% endif %}
+          </div>
+          <h2 class="h5 fw-bold mb-2">
+            <a href="{% url 'opportunity_detail' opportunity.id %}" class="text-decoration-none">{{ opportunity.title }}</a>
+          </h2>
+          <p class="text-muted small mb-3">{{ opportunity.location }}{% if opportunity.region %} &middot; {{ opportunity.region }}{% endif %}</p>
+          <p class="mb-3">{{ opportunity.description|truncatechars:140 }}</p>
+          <div class="opportunity-meta">
+            {% if opportunity.deadline %}<span><i class="bi bi-hourglass-split"></i>Apply by {{ opportunity.deadline|date:"M j" }}</span>{% endif %}
+            <span><i class="bi bi-people"></i>{{ opportunity.application_count }} applicants</span>
+          </div>
+        </div>
+        <div class="card-footer border-0 pt-0 px-4 pb-4 d-flex flex-wrap gap-2">
+          <a href="{% url 'opportunity_detail' opportunity.id %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-arrow-right"></i>Open</a>
+          <form method="post" action="{% url 'toggle_save_opportunity' opportunity.id %}">
+            {% csrf_token %}
+            <button class="btn btn-light btn-sm icon-btn" type="submit"><i class="bi bi-bookmark-x"></i>Remove</button>
+          </form>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="card border-0">
+        <div class="card-body p-5 text-center">
+          <i class="bi bi-bookmark display-5 text-success"></i>
+          <h2 class="h5 fw-bold mt-3">Nothing saved yet</h2>
+          <p class="text-muted mb-3">Save interesting opportunities from the board and they will appear here.</p>
+          <a href="{% url 'opportunities' %}" class="btn btn-primary">Browse opportunities</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

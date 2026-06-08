@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} Scout Card - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="scout-card-shell">
+  <section class="scout-card-hero">
+    <div class="scout-card-media">
+      {% if profile_user.profile_picture %}
+        <img src="{{ profile_user.profile_picture.url }}" class="avatar" alt="{{ profile_user.username }}">
+      {% elif profile and profile.profile_picture %}
+        <img src="{{ profile.profile_picture.url }}" class="avatar" alt="{{ profile_user.username }}">
+      {% else %}
+        <img src="{% static 'img/default-avatar.svg' %}" class="avatar" alt="{{ profile_user.username }}">
+      {% endif %}
+    </div>
+    <div class="scout-card-main">
+      <p class="page-kicker mb-2">ScoutKE Player Card</p>
+      <h1 class="display-6 fw-bold mb-2">{{ profile.full_name|default:profile_user.username }}</h1>
+      <p class="lead mb-3">
+        {{ profile.position|default:"Player" }}
+        {% if profile.current_club %} &middot; {{ profile.current_club }}{% endif %}
+        {% if profile.region %} &middot; {{ profile.region }}{% endif %}
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="verified-pill"><i class="bi bi-stars"></i>Talent Score {{ talent_score }}</span>
+        <span class="badge text-bg-light border p-2">Profile {{ profile_completion }}%</span>
+        {% if profile.age %}<span class="badge text-bg-light border p-2">{{ profile.age }} years</span>{% endif %}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button class="btn btn-light icon-btn" type="button" id="copyScoutCard" data-url="{{ public_url }}"><i class="bi bi-link-45deg"></i>Copy link</button>
+        <button class="btn btn-outline-light icon-btn" type="button" id="shareScoutCard" data-url="{{ public_url }}" data-title="{{ profile_user.username }} ScoutKE card"><i class="bi bi-share"></i>Share</button>
+        <a href="{% url 'view_profile' profile_user.id %}" class="btn btn-outline-light icon-btn"><i class="bi bi-person-badge"></i>Full profile</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="card border-0">
+        <div class="card-body p-4">
+          <h2 class="h5 fw-bold mb-3">Player Snapshot</h2>
+          <p class="mb-4">{{ profile.bio|default:"This player has not added a bio yet." }}</p>
+          <div class="scout-card-stats">
+            <div><strong>{{ stats.matches }}</strong><span>Matches</span></div>
+            <div><strong>{{ stats.goals }}</strong><span>Goals</span></div>
+            <div><strong>{{ stats.assists }}</strong><span>Assists</span></div>
+            <div><strong>{{ stats.followers }}</strong><span>Followers</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0">
+        <div class="card-body p-4">
+          <h2 class="h5 fw-bold mb-3">Scouting Details</h2>
+          <dl class="row mb-0">
+            <dt class="col-5">Foot</dt><dd class="col-7">{{ profile.preferred_foot|title|default:"Not added" }}</dd>
+            <dt class="col-5">Height</dt><dd class="col-7">{% if profile.height_cm %}{{ profile.height_cm }} cm{% else %}Not added{% endif %}</dd>
+            <dt class="col-5">Weight</dt><dd class="col-7">{% if profile.weight_kg %}{{ profile.weight_kg }} kg{% else %}Not added{% endif %}</dd>
+            <dt class="col-5">Nationality</dt><dd class="col-7">{{ profile.nationality|default:"Not added" }}</dd>
+          </dl>
+          {% if profile.highlight_video %}
+            <a href="{{ profile.highlight_video }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary w-100 mt-4 icon-btn"><i class="bi bi-play-circle"></i>Watch highlights</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var copyButton = document.getElementById("copyScoutCard");
+  var shareButton = document.getElementById("shareScoutCard");
+
+  if (copyButton) {
+    copyButton.addEventListener("click", function() {
+      navigator.clipboard.writeText(copyButton.dataset.url).then(function() {
+        copyButton.innerHTML = '<i class="bi bi-check2"></i>Copied';
+      });
+    });
+  }
+
+  if (shareButton) {
+    shareButton.addEventListener("click", function() {
+      if (navigator.share) {
+        navigator.share({ title: shareButton.dataset.title, url: shareButton.dataset.url });
+      } else if (copyButton) {
+        copyButton.click();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

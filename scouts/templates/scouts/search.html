@@ -1,74 +1,142 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}Search Players - ScoutKE{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h3>🔎 Search Players</h3>
-
-  <!-- Search & Filters -->
-  <form method="get" class="row g-3 mb-4">
-    <div class="col-md-3">
-      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by username...">
-    </div>
-    <div class="col-md-2">
-      <select name="position" class="form-select">
-        <option value="any">Any Position</option>
-        <option value="Forward" {% if position == "Forward" %}selected{% endif %}>Forward</option>
-        <option value="Midfielder" {% if position == "Midfielder" %}selected{% endif %}>Midfielder</option>
-        <option value="Defender" {% if position == "Defender" %}selected{% endif %}>Defender</option>
-        <option value="Goalkeeper" {% if position == "Goalkeeper" %}selected{% endif %}>Goalkeeper</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <select name="region" class="form-select">
-        <option value="any">Any Region</option>
-        <option value="Nairobi" {% if region == "Nairobi" %}selected{% endif %}>Nairobi</option>
-        <option value="Coast" {% if region == "Coast" %}selected{% endif %}>Coast</option>
-        <option value="Rift Valley" {% if region == "Rift Valley" %}selected{% endif %}>Rift Valley</option>
-        <option value="Western" {% if region == "Western" %}selected{% endif %}>Western</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <!-- ✅ Prevents "None" error -->
-      <input type="number" name="min_age" value="{{ min_age|default_if_none:'' }}" class="form-control" placeholder="Min Age">
-    </div>
-    <div class="col-md-2">
-      <!-- ✅ Prevents "None" error -->
-      <input type="number" name="max_age" value="{{ max_age|default_if_none:'' }}" class="form-control" placeholder="Max Age">
-    </div>
-    <div class="col-md-1">
-      <button type="submit" class="btn btn-primary w-100">Go</button>
-    </div>
-  </form>
-
-  <!-- Results -->
-  <div class="row g-3">
-    {% for profile in players %}
-      <div class="col-md-4">
-        <div class="card shadow-sm text-center p-3">
-          {% if profile.profile_picture %}
-            <img src="{{ profile.profile_picture.url }}" 
-                 class="rounded-circle mb-2" 
-                 width="80" height="80" 
-                 alt="{{ profile.user.username }}">
-          {% else %}
-            <!-- ✅ Make sure the file exists in static/img/default-avatar.png -->
-            <img src="{% static 'img/default-avatar.png' %}" 
-                 class="rounded-circle mb-2" 
-                 width="80" height="80" 
-                 alt="Default Avatar">
-          {% endif %}
-
-          <h6 class="fw-bold">{{ profile.user.username }}</h6>
-          <p class="text-muted small mb-2">
-            {{ profile.position }} • {{ profile.age }} yrs • {{ profile.nationality }}
-          </p>
-          
-          <a href="{% url 'view_profile' profile.user.id %}" class="btn btn-sm btn-outline-primary">👀 View</a>
-        </div>
-      </div>
-    {% empty %}
-      <p class="text-muted">No players found.</p>
-    {% endfor %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Player discovery</p>
+    <h1 class="h3 fw-bold mb-1">Search Players</h1>
+    <p class="text-muted mb-0">Find prospects by name, region, position, club, or age range.</p>
   </div>
+  <a href="{% url 'talent_radar' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-radar"></i>Talent Radar</a>
+</div>
+
+<form method="get" class="surface-panel filter-panel p-3 mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label small fw-bold">Search</label>
+      <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="Name, club, region...">
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Position</label>
+      <select name="position" class="form-select">
+        <option value="any">Any position</option>
+        {% for value,label in position_choices %}
+          <option value="{{ value }}" {% if position == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Region</label>
+      <select name="region" class="form-select">
+        <option value="any">Any region</option>
+        {% for value,label in region_choices %}
+          <option value="{{ value }}" {% if region == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Min age</label>
+      <input type="number" name="min_age" value="{{ min_age|default_if_none:'' }}" class="form-control" placeholder="Min age">
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Max age</label>
+      <input type="number" name="max_age" value="{{ max_age|default_if_none:'' }}" class="form-control" placeholder="Max age">
+    </div>
+    <div class="col-lg-1 col-md-6 d-grid">
+      <button type="submit" class="btn btn-primary icon-btn justify-content-center"><i class="bi bi-search"></i>Go</button>
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Min talent</label>
+      <select name="min_score" class="form-select">
+        <option value="" {% if not min_score %}selected{% endif %}>Any score</option>
+        <option value="25" {% if min_score == "25" %}selected{% endif %}>25+</option>
+        <option value="50" {% if min_score == "50" %}selected{% endif %}>50+</option>
+        <option value="75" {% if min_score == "75" %}selected{% endif %}>75+</option>
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label small fw-bold">Profile strength</label>
+      <select name="completion" class="form-select">
+        <option value="any" {% if completion == "any" %}selected{% endif %}>Any completion</option>
+        <option value="50" {% if completion == "50" %}selected{% endif %}>50%+</option>
+        <option value="75" {% if completion == "75" %}selected{% endif %}>75%+</option>
+        <option value="90" {% if completion == "90" %}selected{% endif %}>90%+</option>
+      </select>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label small fw-bold">Sort</label>
+      <select name="sort" class="form-select">
+        <option value="talent" {% if sort == "talent" %}selected{% endif %}>Talent score</option>
+        <option value="completion" {% if sort == "completion" %}selected{% endif %}>Profile strength</option>
+        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Recently updated</option>
+        <option value="age_young" {% if sort == "age_young" %}selected{% endif %}>Youngest first</option>
+        <option value="age_old" {% if sort == "age_old" %}selected{% endif %}>Oldest first</option>
+      </select>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <label class="settings-check mb-0 h-100">
+        <input type="checkbox" name="has_video" value="1" {% if has_video %}checked{% endif %}>
+        Has highlight video
+      </label>
+    </div>
+    <div class="col-lg-2 col-md-6 d-grid">
+      <a href="{% url 'scout_search' %}" class="btn btn-outline-secondary icon-btn justify-content-center"><i class="bi bi-x-circle"></i>Reset</a>
+    </div>
+  </div>
+</form>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <p class="text-muted mb-0">{{ result_count }} player{{ result_count|pluralize }} found</p>
+  <a href="{% url 'saved_players' %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-bookmark-check"></i>Saved players</a>
+</div>
+
+<div class="row g-3">
+  {% for profile in players %}
+    <div class="col-md-6 col-xl-4">
+      <article class="card border-0 h-100 resource-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            {% if profile.user.profile_picture %}
+              <img src="{{ profile.user.profile_picture.url }}" class="rounded-circle avatar" width="64" height="64" alt="{{ profile.user.username }}">
+            {% elif profile.profile_picture %}
+              <img src="{{ profile.profile_picture.url }}" class="rounded-circle avatar" width="64" height="64" alt="{{ profile.user.username }}">
+            {% else %}
+              <img src="{% static 'img/default-avatar.svg' %}" class="rounded-circle avatar" width="64" height="64" alt="{{ profile.user.username }}">
+            {% endif %}
+            <div>
+              <h2 class="h6 fw-bold mb-1">{{ profile.full_name|default:profile.user.username }}</h2>
+              <p class="text-muted small mb-0">{{ profile.position }}{% if profile.age %} &middot; {{ profile.age }} yrs{% endif %}</p>
+            </div>
+            <div class="talent-score-mini ms-auto">{{ profile.talent_score }}</div>
+          </div>
+          <div class="small text-muted mb-3">
+            <div><i class="bi bi-geo-alt me-1"></i>{{ profile.region|default:"Region not added" }}</div>
+            <div><i class="bi bi-shield me-1"></i>{{ profile.current_club|default:"Club not added" }}</div>
+            <div><i class="bi bi-bar-chart me-1"></i>{{ profile.completion_percent }}% profile strength</div>
+            {% if profile.highlight_video %}<div><i class="bi bi-play-circle me-1"></i>Highlights added</div>{% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'view_profile' profile.user.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-eye"></i>View</a>
+            {% if profile.user.id in saved_player_ids %}
+              <a href="{% url 'saved_players' %}" class="btn btn-sm btn-light icon-btn"><i class="bi bi-bookmark-check"></i>Saved</a>
+            {% else %}
+              <a href="{% url 'save_player' profile.user.id %}" class="btn btn-sm btn-primary icon-btn"><i class="bi bi-bookmark-plus"></i>Save</a>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+        <i class="bi bi-search display-6" aria-hidden="true"></i>
+        <h2 class="h5">No players found</h2>
+        <p class="text-muted mb-0">Try widening the age range or searching by region, club, or position.</p>
+      </div>
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}

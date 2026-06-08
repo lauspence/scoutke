@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Kenya Talent Radar - ScoutKE{% endblock %}
+
+{% block content %}
+<section class="radar-hero mb-4">
+  <div>
+    <p class="page-kicker mb-2">Kenya Talent Radar</p>
+    <h1 class="display-5 fw-bold mb-3">A live national board for grassroots football talent.</h1>
+    <p class="lead mb-0">ScoutKE turns community sightings into a visible Kenyan scouting pulse that fans, players, scouts, and clubs can follow together.</p>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <a href="{% url 'create_talent_spot' %}" class="btn btn-primary icon-btn"><i class="bi bi-plus-circle"></i>Submit a Spot</a>
+      <a href="{% url 'talent_spots' %}" class="btn btn-outline-light icon-btn"><i class="bi bi-list-stars"></i>Browse Leads</a>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-tile radar-stat">
+      <span>Total active leads</span>
+      <strong>{{ total_spots }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-tile radar-stat">
+      <span>Scout verified</span>
+      <strong>{{ verified_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-tile radar-stat">
+      <span>Community confirmed</span>
+      <strong>{{ community_count }}</strong>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <div class="section-header">
+          <div>
+            <p class="page-kicker mb-1">Regional heat</p>
+            <h2 class="h5 fw-bold mb-0">Where talent is being spotted</h2>
+          </div>
+        </div>
+        <div class="radar-bars">
+          {% for region in regional_counts %}
+            <div class="radar-bar">
+              <div class="d-flex justify-content-between small fw-bold">
+                <span>{{ region.location|default:"Unknown location" }}</span>
+                <span>{{ region.total }}</span>
+              </div>
+              <div class="radar-track">
+                <span style="width: {% widthratio region.total total_spots 100 %}%"></span>
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No regional data yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 h-100">
+      <div class="card-body p-4">
+        <p class="page-kicker mb-1">Position demand</p>
+        <h2 class="h5 fw-bold mb-3">Talent by position</h2>
+        <div class="d-flex flex-wrap gap-2">
+          {% for position in position_counts %}
+            <span class="badge text-bg-light border p-2">{{ position.position|title }}: {{ position.total }}</span>
+          {% empty %}
+            <p class="text-muted mb-0">No position data yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="mt-4">
+  <div class="section-header">
+    <div>
+      <p class="page-kicker mb-1">Talent score leaderboard</p>
+      <h2 class="h4 fw-bold mb-0">Players rising on ScoutKE</h2>
+    </div>
+  </div>
+  <div class="row g-3">
+    {% for profile in top_profiles %}
+      <div class="col-md-6 col-xl-4">
+        <a href="{% url 'view_profile' profile.user.id %}" class="text-decoration-none text-dark">
+          <article class="card border-0 h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3">
+                <div class="talent-score-mini">{{ profile.talent_score }}</div>
+                <div>
+                  <h3 class="h6 fw-bold mb-1">{{ profile.full_name|default:profile.user.username }}</h3>
+                  <p class="text-muted small mb-0">{{ profile.position }}{% if profile.region %} &middot; {{ profile.region }}{% endif %}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="surface-panel p-4 text-center text-muted">No completed player profiles yet.</div></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="mt-4">
+  <div class="section-header">
+    <div>
+      <p class="page-kicker mb-1">Spotlight</p>
+      <h2 class="h4 fw-bold mb-0">Latest prospects on the radar</h2>
+    </div>
+  </div>
+  <div class="row g-3">
+    {% for spot in spotlight_spots %}
+      <div class="col-md-6 col-xl-4">
+        <article class="card border-0 h-100">
+          {% if spot.evidence_image %}
+            <img src="{{ spot.evidence_image.url }}" class="card-img-top" alt="{{ spot.prospect_name }}">
+          {% else %}
+            <img src="{% static 'img/tuskeryouth.jpg' %}" class="card-img-top" alt="Kenyan youth footballers">
+          {% endif %}
+          <div class="card-body">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+              <span class="badge text-bg-light border">{{ spot.get_status_display }}</span>
+              <span class="text-muted small">{{ spot.updated_at|naturaltime }}</span>
+            </div>
+            <h3 class="h5 fw-bold mb-1">{{ spot.prospect_name }}</h3>
+            <p class="text-muted small mb-2">{{ spot.get_position_display }} &middot; {{ spot.location }}</p>
+            <p>{{ spot.notes|truncatechars:120 }}</p>
+            <a href="{% url 'talent_spot_detail' spot.id %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-arrow-right"></i>Open lead</a>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="surface-panel p-4 text-center">
+          <h3 class="h5">No talent has hit the radar yet</h3>
+          <p class="text-muted">Be the first to place a local player on the national board.</p>
+          <a href="{% url 'create_talent_spot' %}" class="btn btn-primary">Submit a Spot</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Football Feed - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="section-header">
+      <div>
+      <p class="page-kicker mb-1">Community pulse</p>
+      <h1 class="h3 fw-bold mb-1">Football Feed</h1>
+      <p class="text-muted mb-0">Scroll Kenyan football, share promising talent, and keep the scouting conversation alive.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <a href="{% url 'create_talent_spot' %}" class="btn btn-primary btn-sm icon-btn"><i class="bi bi-crosshair"></i>Submit Talent Spot</a>
+      <a href="{% url 'talent_spots' %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-search"></i>Browse Spots</a>
+    </div>
+    {% include "partials/onboarding_checklist.html" %}
+    {% include "posts/feeds.html" with form=form posts=posts comment_form=comment_form %}
+  </div>
+</div>
+{% endblock %}

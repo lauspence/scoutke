@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Opportunities - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Opportunity board</p>
+    <h1 class="h3 fw-bold mb-1">Trials, Open Days & Scholarships</h1>
+    <p class="text-muted mb-0">Find real football opportunities published by clubs, scouts, and verified staff.</p>
+  </div>
+  {% if user.is_authenticated and user.role == "club" or user.is_authenticated and user.role == "scout" or user.is_staff %}
+    <a href="{% url 'create_opportunity' %}" class="btn btn-primary icon-btn"><i class="bi bi-plus-circle"></i>Publish</a>
+  {% elif user.is_authenticated %}
+    <a href="{% url 'saved_opportunities' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-bookmark"></i>Saved</a>
+  {% endif %}
+</div>
+
+<form method="get" class="card border-0 mb-4 filter-panel">
+  <div class="card-body p-3">
+    <div class="row g-2 align-items-end">
+      {% if user.is_authenticated and user.role == "player" %}
+        <div class="col-12">
+          <div class="theme-switch opportunity-mode-switch" role="group" aria-label="Opportunity mode">
+            <a href="?mode=for_you&status=open" class="theme-option text-decoration-none {% if mode == 'for_you' %}is-active{% endif %}">
+              <i class="bi bi-stars"></i><span>For You</span>
+            </a>
+            <a href="?mode=all&status={{ status }}&type={{ opportunity_type }}&q={{ query }}&region={{ region }}&location={{ location }}&age={{ player_age }}&deadline={{ deadline_window }}&sort={{ sort }}" class="theme-option text-decoration-none {% if mode != 'for_you' %}is-active{% endif %}">
+              <i class="bi bi-grid"></i><span>All</span>
+            </a>
+            <a href="{% url 'saved_opportunities' %}" class="theme-option text-decoration-none">
+              <i class="bi bi-bookmark"></i><span>Saved</span>
+            </a>
+          </div>
+        </div>
+      {% endif %}
+      <div class="col-lg-4">
+        <label class="form-label small fw-bold">Search</label>
+        <input type="search" class="form-control" name="q" value="{{ query }}" placeholder="Position, region, venue, opportunity">
+        <input type="hidden" name="mode" value="{{ mode }}">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Type</label>
+        <select class="form-select" name="type">
+          <option value="any">Any type</option>
+          {% for value, label in type_choices %}
+            <option value="{{ value }}" {% if opportunity_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Status</label>
+        <select class="form-select" name="status">
+          <option value="open" {% if status == "open" %}selected{% endif %}>Open</option>
+          <option value="closed" {% if status == "closed" %}selected{% endif %}>Closed</option>
+          <option value="all" {% if status == "all" %}selected{% endif %}>All</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Region</label>
+        <input type="search" class="form-control" name="region" value="{{ region }}" placeholder="Nairobi">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Location</label>
+        <input type="search" class="form-control" name="location" value="{{ location }}" placeholder="Venue or town">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Player age</label>
+        <input type="number" class="form-control" name="age" value="{{ player_age }}" placeholder="Age fit">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label class="form-label small fw-bold">Deadline</label>
+        <select class="form-select" name="deadline">
+          <option value="any" {% if deadline_window == "any" %}selected{% endif %}>Any deadline</option>
+          <option value="7" {% if deadline_window == "7" %}selected{% endif %}>Next 7 days</option>
+          <option value="30" {% if deadline_window == "30" %}selected{% endif %}>Next 30 days</option>
+          <option value="none" {% if deadline_window == "none" %}selected{% endif %}>No deadline</option>
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label class="form-label small fw-bold">Sort</label>
+        <select class="form-select" name="sort">
+          <option value="recent" {% if sort == "recent" %}selected{% endif %}>Newest</option>
+          <option value="deadline" {% if sort == "deadline" %}selected{% endif %}>Deadline soonest</option>
+          <option value="event" {% if sort == "event" %}selected{% endif %}>Event date</option>
+          <option value="popular" {% if sort == "popular" %}selected{% endif %}>Most applicants</option>
+          <option value="saved" {% if sort == "saved" %}selected{% endif %}>Most saved</option>
+          <option value="title" {% if sort == "title" %}selected{% endif %}>Title A-Z</option>
+        </select>
+      </div>
+      <div class="col-lg-2 d-grid">
+        <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-search"></i>Filter</button>
+      </div>
+      <div class="col-lg-1 d-grid">
+        <a href="{% url 'opportunities' %}" class="btn btn-outline-secondary icon-btn justify-content-center"><i class="bi bi-x-circle"></i>Reset</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <p class="text-muted mb-0">{{ result_count }} opportunit{{ result_count|pluralize:"y,ies" }} found</p>
+  {% if user.is_authenticated and user.role == "player" %}
+    <a href="{% url 'my_opportunity_applications' %}" class="btn btn-sm btn-outline-primary icon-btn"><i class="bi bi-send"></i>My applications</a>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  {% for opportunity in opportunities %}
+    <div class="col-md-6 col-xl-4">
+      <article class="card border-0 h-100 opportunity-card">
+        <img src="{% static 'img/Tusker.jpg' %}" class="card-img-top" alt="Kenyan footballers celebrating">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between gap-2 mb-3">
+            <span class="badge text-bg-success">{{ opportunity.get_opportunity_type_display }}</span>
+            <div class="d-flex gap-1 flex-wrap justify-content-end">
+              {% if opportunity.id in applied_opportunity_ids %}
+                <span class="badge text-bg-success">Applied</span>
+              {% elif opportunity.id in saved_opportunity_ids %}
+                <span class="badge text-bg-success">Saved</span>
+              {% endif %}
+              {% if opportunity.is_open %}
+                <span class="badge text-bg-light border">Open</span>
+              {% else %}
+                <span class="badge text-bg-light border">Closed</span>
+              {% endif %}
+            </div>
+          </div>
+          <h2 class="h5 fw-bold mb-2"><a href="{% url 'opportunity_detail' opportunity.id %}" class="text-decoration-none">{{ opportunity.title }}</a></h2>
+          <p class="text-muted small mb-3">
+            <i class="bi bi-geo-alt me-1"></i>{{ opportunity.location }}
+            {% if opportunity.region %} &middot; {{ opportunity.region }}{% endif %}
+          </p>
+          <p class="mb-3">{{ opportunity.description|truncatechars:150 }}</p>
+          {% if opportunity.match_reasons %}
+            <div class="d-flex flex-wrap gap-1 mb-3">
+              <span class="badge text-bg-success">Match {{ opportunity.match_score }}</span>
+              {% for reason in opportunity.match_reasons %}
+                <span class="badge text-bg-light border">{{ reason }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="opportunity-meta">
+            {% if opportunity.event_date %}<span><i class="bi bi-calendar-event"></i>{{ opportunity.event_date|date:"M j, Y" }}</span>{% endif %}
+            {% if opportunity.deadline %}<span><i class="bi bi-hourglass-split"></i>Apply by {{ opportunity.deadline|date:"M j" }}</span>{% endif %}
+            {% if opportunity.age_min or opportunity.age_max %}<span><i class="bi bi-person"></i>Ages {{ opportunity.age_min|default:"any" }} - {{ opportunity.age_max|default:"any" }}</span>{% endif %}
+            {% if opportunity.positions %}<span><i class="bi bi-cone-striped"></i>{{ opportunity.positions }}</span>{% endif %}
+            <span><i class="bi bi-people"></i>{{ opportunity.application_count }} applicants</span>
+            <span><i class="bi bi-bookmark"></i>{{ opportunity.save_count }} saved</span>
+          </div>
+        </div>
+        <div class="card-footer border-0 pt-0 px-4 pb-4 d-flex flex-wrap gap-2">
+          <a href="{% url 'opportunity_detail' opportunity.id %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-arrow-right"></i>View details</a>
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'toggle_save_opportunity' opportunity.id %}">
+              {% csrf_token %}
+              <button class="btn btn-light btn-sm icon-btn" type="submit">
+                <i class="bi {% if opportunity.id in saved_opportunity_ids %}bi-bookmark-check{% else %}bi-bookmark{% endif %}"></i>
+                {% if opportunity.id in saved_opportunity_ids %}Saved{% else %}Save{% endif %}
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+          <i class="bi bi-calendar2-week display-5 text-success"></i>
+          <h2 class="h5 fw-bold mt-3">No opportunities found</h2>
+          <p class="text-muted mb-0">Try another filter or check again when clubs publish new calls.</p>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

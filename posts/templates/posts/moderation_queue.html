@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Moderation Queue - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Trust & safety</p>
+    <h1 class="h3 fw-bold mb-1">Moderation Queue</h1>
+    <p class="text-muted mb-0">Review content reports from the ScoutKE community.</p>
+  </div>
+</div>
+
+<form method="get" class="surface-panel p-3 mb-4">
+  <div class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <select name="status" class="form-select">
+        <option value="all" {% if status == "all" %}selected{% endif %}>All reports</option>
+        {% for value,label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100" type="submit">Filter</button>
+    </div>
+  </div>
+</form>
+
+<div class="row g-3">
+  {% for report in reports %}
+    <div class="col-lg-6">
+      <article class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between gap-2 mb-2">
+            <span class="badge text-bg-light border">{{ report.get_status_display }}</span>
+            <span class="text-muted small">{{ report.created_at|date:"M j, Y, P" }}</span>
+          </div>
+          <h2 class="h5 fw-bold mb-1">{{ report.get_reason_display }}</h2>
+          <p class="text-muted small">Reported by {{ report.reporter.username }} &middot; {{ report.target_label }}</p>
+          {% if report.post %}
+            <div class="surface-panel p-3 mb-3">
+              <strong>Post by {{ report.post.author.username }}</strong>
+              <p class="mb-0">{{ report.post.content|truncatechars:180 }}</p>
+            </div>
+          {% elif report.talent_spot %}
+            <div class="surface-panel p-3 mb-3">
+              <strong>{{ report.talent_spot.prospect_name }}</strong>
+              <p class="mb-0">{{ report.talent_spot.notes|truncatechars:180 }}</p>
+            </div>
+          {% endif %}
+          {% if report.details %}
+            <p>{{ report.details }}</p>
+          {% endif %}
+          <div class="d-flex flex-wrap gap-2">
+            <form method="post" action="{% url 'review_content_report' report.id 'reviewing' %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-primary" type="submit">Reviewing</button>
+            </form>
+            <form method="post" action="{% url 'review_content_report' report.id 'resolve' %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-success" type="submit">Resolve</button>
+            </form>
+            <form method="post" action="{% url 'review_content_report' report.id 'dismiss' %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Dismiss</button>
+            </form>
+          </div>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="surface-panel p-4 text-center">
+        <p class="text-muted mb-0">No reports in this queue.</p>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

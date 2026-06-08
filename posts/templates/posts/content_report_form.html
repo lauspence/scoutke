@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Report Content - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <p class="page-kicker mb-1">Trust & safety</p>
+        <h1 class="h3 fw-bold mb-2">Report {{ target_type }}</h1>
+        <p class="text-muted">You are reporting content related to <strong>{{ target_label }}</strong>. Moderators will review it.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Reason</label>
+            {{ form.reason }}
+            {{ form.reason.errors }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Details</label>
+            {{ form.details }}
+            {{ form.details.errors }}
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-flag"></i>Submit report</button>
+            <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

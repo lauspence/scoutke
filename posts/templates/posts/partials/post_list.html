@@ -1,19 +1,115 @@
+{% load static %}
+{% load humanize %}
+
 {% for post in posts %}
-<div class="post-card mb-3 p-3 rounded shadow-sm bg-white" data-post-id="{{ post.id }}">
-    <div class="d-flex align-items-center mb-2">
-        {% if post.author.profile.image %}
-            <img src="{{ post.author.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="">
-        {% else %}
-            <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle me-2" width="40" height="40" alt="">
+  <div class="card post-card border-0 mb-4 mt-3" id="post-{{ post.id }}">
+    <div class="card-body">
+      <div class="d-flex align-items-center mb-3">
+        <img src="{% if post.author.profile_picture %}{{ post.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}"
+             class="rounded-circle avatar me-2" width="40" height="40" alt="{{ post.author.username }}">
+        <div>
+          <h6 class="mb-0">{{ post.author.username }}</h6>
+          <small class="text-muted">{{ post.time_since }} &middot; {{ post.author.role|title }}</small>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <span class="badge text-bg-light border">{{ post.get_category_display }}</span>
+        {% if post.prospect_name %}
+          <span class="badge text-bg-success">Talent: {{ post.prospect_name }}</span>
         {% endif %}
-        <strong>{{ post.author.username }}</strong>
-        <small class="text-muted ms-2">{{ post.created_at|timesince }} ago</small>
+        {% if post.location %}
+          <span class="badge text-bg-light border">{{ post.location }}</span>
+        {% endif %}
+      </div>
+
+      {% if post.original_post %}
+        <p class="text-muted small mb-2"><i class="bi bi-repeat me-1"></i>Reposted from <strong>{{ post.original_post.author.username }}</strong></p>
+        <div class="surface-panel p-3 mb-3">
+          {% if post.original_post.content %}<p>{{ post.original_post.content }}</p>{% endif %}
+          {% if post.original_post.image %}
+            <div class="post-image-wrapper mb-3">
+              <img src="{{ post.original_post.image.url }}" class="post-image" alt="Reposted image">
+            </div>
+          {% endif %}
+          {% if post.original_post.video %}
+            <div class="ratio ratio-16x9 mb-3">
+              <video class="w-100 rounded" controls>
+                <source src="{{ post.original_post.video.url }}" type="video/mp4">
+              </video>
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        {% if post.content %}<p>{{ post.content }}</p>{% endif %}
+        {% if post.image %}
+          <div class="post-image-wrapper mb-3">
+            <img src="{{ post.image.url }}" class="post-image" alt="Post image">
+          </div>
+        {% endif %}
+        {% if post.video %}
+          <div class="ratio ratio-16x9 mb-3">
+            <video class="w-100 rounded" controls>
+              <source src="{{ post.video.url }}" type="video/mp4">
+            </video>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="post-actions text-muted border-top pt-3">
+        {% if user.is_authenticated %}
+          <div class="post-action-group">
+            <a href="#" class="text-decoration-none icon-btn like-btn" data-id="{{ post.id }}">
+              <i class="bi bi-hand-thumbs-up"></i>Like (<span id="likes-count-{{ post.id }}">{{ post.total_likes }}</span>)
+            </a>
+            <a class="text-decoration-none icon-btn" data-bs-toggle="collapse" href="#comments-{{ post.id }}">
+              <i class="bi bi-chat-left-text"></i>Comment (<span id="comments-count-{{ post.id }}">{{ post.comments.count }}</span>)
+            </a>
+            <form action="{% url 'repost_post' post.id %}" method="POST">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link p-0 icon-btn text-muted"><i class="bi bi-repeat"></i>Repost</button>
+            </form>
+          </div>
+          <a href="{% url 'report_post' post.id %}" class="text-decoration-none icon-btn text-muted">
+            <i class="bi bi-flag"></i>Report
+          </a>
+        {% else %}
+          <div class="post-action-group">
+            <a href="{% url 'login' %}" class="text-decoration-none">Like ({{ post.total_likes }})</a>
+            <a href="{% url 'login' %}" class="text-decoration-none">Comment ({{ post.comments.count }})</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="collapse mt-3" id="comments-{{ post.id }}">
+        {% if user.is_authenticated %}
+          <form method="post" class="comment-form" data-id="{{ post.id }}">
+            {% csrf_token %}
+            {{ comment_form.content }}
+            <button type="submit" class="btn btn-sm btn-primary mt-2">Post</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Log in to comment</a>
+        {% endif %}
+
+        <ul class="list-unstyled mt-3 mb-0" id="comments-list-{{ post.id }}">
+          {% for comment in post.comments.all %}
+            <li class="border-top pt-2 mt-2">
+              <strong>{{ comment.author.username }}:</strong> {{ comment.content }}
+              <div class="text-muted small">{{ comment.created_at|naturaltime }}</div>
+            </li>
+          {% empty %}
+            <li class="text-muted small comments-empty">No comments yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
-
-    <p>{{ post.content }}</p>
-
-    {% if post.image %}
-        <img src="{{ post.image.url }}" class="img-fluid rounded mb-2" alt="">
-    {% endif %}
-</div>
+  </div>
+{% empty %}
+  {% if show_empty %}
+    <div class="empty-state">
+      <i class="bi bi-rss display-6" aria-hidden="true"></i>
+      <p class="text-muted mb-0">No posts to show yet.</p>
+    </div>
+  {% endif %}
 {% endfor %}

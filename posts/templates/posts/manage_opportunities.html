@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Opportunities - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Recruitment pipeline</p>
+    <h1 class="h3 fw-bold mb-1">Manage Opportunities</h1>
+    <p class="text-muted mb-0">Monitor published calls, application volume, and shortlists.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    {% if user.is_staff %}
+      <a href="?scope=all" class="btn btn-sm {% if scope == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+      <a href="?scope=mine" class="btn btn-sm {% if scope != 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">Mine</a>
+    {% endif %}
+    <a href="{% url 'create_opportunity' %}" class="btn btn-primary icon-btn"><i class="bi bi-plus-circle"></i>Publish</a>
+  </div>
+</div>
+
+{% if opportunity_alerts %}
+  <section class="card border-0 mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <h2 class="h5 fw-bold mb-1">Opportunity Alerts</h2>
+          <p class="text-muted small mb-0">{{ unread_opportunity_alerts }} unread updates from applications and withdrawals.</p>
+        </div>
+        <a href="{% url 'notifications' %}" class="btn btn-sm btn-outline-primary">View all</a>
+      </div>
+      <div class="row g-2">
+        {% for alert in opportunity_alerts %}
+          <div class="col-lg-6">
+            <a href="{% url 'open_notification' alert.id %}" class="alert-digest-item text-decoration-none">
+              <strong>{{ alert.message }}</strong>
+              <span>{{ alert.created_at|timesince }} ago</span>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+<div class="row g-3">
+  {% for opportunity in opportunities %}
+    <div class="col-xl-4 col-md-6">
+      <article class="card border-0 h-100 resource-card">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between gap-2 mb-3">
+            <span class="badge text-bg-success">{{ opportunity.get_opportunity_type_display }}</span>
+            {% if opportunity.is_open %}
+              <span class="badge text-bg-light border">Open</span>
+            {% else %}
+              <span class="badge text-bg-light border">Closed</span>
+            {% endif %}
+          </div>
+          <h2 class="h5 fw-bold mb-2">{{ opportunity.title }}</h2>
+          {% if scope == "all" %}
+            <p class="text-muted small mb-2">By {{ opportunity.publisher.username }}</p>
+          {% endif %}
+          <p class="text-muted small mb-3">{{ opportunity.location }}{% if opportunity.deadline %} &middot; Deadline {{ opportunity.deadline|date:"M j" }}{% endif %}</p>
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="stat-tile text-center">
+                <strong>{{ opportunity.application_count }}</strong>
+                <small class="d-block text-muted">Applicants</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-tile text-center">
+                <strong>{{ opportunity.shortlisted_count }}</strong>
+                <small class="d-block text-muted">Shortlisted</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 pt-0 px-4 pb-4 d-flex flex-wrap gap-2">
+          <a href="{% url 'opportunity_detail' opportunity.id %}" class="btn btn-outline-primary btn-sm icon-btn"><i class="bi bi-people"></i>Review applicants</a>
+          <a href="{% url 'edit_opportunity' opportunity.id %}" class="btn btn-light btn-sm icon-btn"><i class="bi bi-pencil-square"></i>Edit</a>
+          <form method="post" action="{% url 'toggle_opportunity_active' opportunity.id %}">
+            {% csrf_token %}
+            <button class="btn {% if opportunity.is_active %}btn-outline-danger{% else %}btn-outline-primary{% endif %} btn-sm icon-btn" type="submit">
+              <i class="bi {% if opportunity.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i>
+              {% if opportunity.is_active %}Close{% else %}Reopen{% endif %}
+            </button>
+          </form>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="empty-state">
+          <i class="bi bi-calendar-plus display-5 text-success"></i>
+          <h2 class="h5 fw-bold mt-3">No published opportunities yet</h2>
+          <p class="text-muted mb-3">Publish your first trial, open day, or academy intake.</p>
+          <a href="{% url 'create_opportunity' %}" class="btn btn-primary">Publish opportunity</a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Scout Report - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="mb-4">
+      <h1 class="h3 fw-bold mb-1">Scout Report</h1>
+      <p class="text-muted mb-0">{{ spot.prospect_name }} &middot; {{ spot.location }}</p>
+    </div>
+
+    <form method="post" class="card border-0">
+      {% csrf_token %}
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-6 col-md">
+            <label class="form-label">Technical</label>
+            {{ form.technical }}
+            {{ form.technical.errors }}
+          </div>
+          <div class="col-6 col-md">
+            <label class="form-label">Physical</label>
+            {{ form.physical }}
+            {{ form.physical.errors }}
+          </div>
+          <div class="col-6 col-md">
+            <label class="form-label">Tactical</label>
+            {{ form.tactical }}
+            {{ form.tactical.errors }}
+          </div>
+          <div class="col-6 col-md">
+            <label class="form-label">Mentality</label>
+            {{ form.mentality }}
+            {{ form.mentality.errors }}
+          </div>
+          <div class="col-6 col-md">
+            <label class="form-label">Potential</label>
+            {{ form.potential }}
+            {{ form.potential.errors }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Recommendation</label>
+            {{ form.recommendation }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Report summary</label>
+            {{ form.summary }}
+            {{ form.summary.errors }}
+          </div>
+        </div>
+      </div>
+      <div class="card-footer border-0 action-row">
+        <a href="{% url 'talent_spot_detail' spot.id %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Cancel</a>
+        <button class="btn btn-primary icon-btn" type="submit"><i class="bi bi-save"></i>Save Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

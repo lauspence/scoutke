@@ -27,15 +27,15 @@ class PlayerProfileForm(forms.ModelForm):
             "full_name": forms.TextInput(attrs={"class": "form-control"}),
             "age": forms.NumberInput(attrs={"class": "form-control", "min": 10}),
             "nationality": forms.TextInput(attrs={"class": "form-control"}),
-            "region": forms.Select(attrs={"class": "form-control"}),  # ✅ will use REGION_CHOICES from model
+            "region": forms.Select(attrs={"class": "form-control"}),  # Uses REGION_CHOICES from model.
 
             # Physical
             "height_cm": forms.NumberInput(attrs={"class": "form-control"}),
             "weight_kg": forms.NumberInput(attrs={"class": "form-control"}),
-            "preferred_foot": forms.Select(attrs={"class": "form-control"}),  # ✅ will use choices from model
+            "preferred_foot": forms.Select(attrs={"class": "form-control"}),  # Uses choices from model.
 
             # Football
-            "position": forms.Select(attrs={"class": "form-control"}),  # ✅ will use POSITION_CHOICES from model
+            "position": forms.Select(attrs={"class": "form-control"}),  # Uses POSITION_CHOICES from model.
             "current_club": forms.TextInput(attrs={"class": "form-control"}),
             "jersey_number": forms.TextInput(attrs={"class": "form-control"}),
 

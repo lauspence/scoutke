@@ -2,218 +2,162 @@
 {% load static %}
 {% load widget_tweaks %}
 
+{% block title %}Update Player Profile - ScoutKE{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h3 class="fw-bold mb-4 text-center">⚽ Update Your Player Profile</h3>
-
-    <form method="post" enctype="multipart/form-data" class="card shadow-sm rounded-4 p-4">
-        {% csrf_token %}
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-            {{ form.non_field_errors }}
-        </div>
-        {% endif %}
-
-        <!-- Tabs Navigation -->
-        <ul class="nav nav-tabs mb-4" id="profileTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button">
-                    👤 Personal
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="physical-tab" data-bs-toggle="tab" data-bs-target="#physical" type="button">
-                    💪 Physical
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="football-tab" data-bs-toggle="tab" data-bs-target="#football" type="button">
-                    ⚽ Football
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button">
-                    📸 Media
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="bio-tab" data-bs-toggle="tab" data-bs-target="#bio" type="button">
-                    📝 Bio
-                </button>
-            </li>
-        </ul>
-
-        <!-- Tabs Content -->
-        <div class="tab-content" id="profileTabContent">
-
-            <!-- Personal Tab -->
-            <div class="tab-pane fade show active" id="personal">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        {{ form.full_name.label_tag }}
-                        {{ form.full_name|add_class:"form-control" }}
-                        {% for error in form.full_name.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-2">
-                        {{ form.age.label_tag }}
-                        {{ form.age|add_class:"form-control" }}
-                        {% for error in form.age.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.nationality.label_tag }}
-                        {{ form.nationality|add_class:"form-control" }}
-                        {% for error in form.nationality.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.region.label_tag }}
-                        {{ form.region|add_class:"form-control" }}
-                        {% for error in form.region.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Physical Tab -->
-            <div class="tab-pane fade" id="physical">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        {{ form.height_cm.label_tag }}
-                        {{ form.height_cm|add_class:"form-control" }}
-                        {% for error in form.height_cm.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-4">
-                        {{ form.weight_kg.label_tag }}
-                        {{ form.weight_kg|add_class:"form-control" }}
-                        {% for error in form.weight_kg.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-4">
-                        {{ form.preferred_foot.label_tag }}
-                        {{ form.preferred_foot|add_class:"form-control" }}
-                        {% for error in form.preferred_foot.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Football Tab -->
-            <div class="tab-pane fade" id="football">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        {{ form.position.label_tag }}
-                        {{ form.position|add_class:"form-control" }}
-                        {% for error in form.position.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.current_club.label_tag }}
-                        {{ form.current_club|add_class:"form-control" }}
-                        {% for error in form.current_club.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.jersey_number.label_tag }}
-                        {{ form.jersey_number|add_class:"form-control" }}
-                        {% for error in form.jersey_number.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Media Tab -->
-            <div class="tab-pane fade" id="media">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        {{ form.profile_picture.label_tag }}
-                        {{ form.profile_picture|add_class:"form-control" }}
-                        {% for error in form.profile_picture.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.highlight_video.label_tag }}
-                        {{ form.highlight_video|add_class:"form-control" }}
-                        {% for error in form.highlight_video.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bio Tab -->
-            <div class="tab-pane fade" id="bio">
-                <div class="mb-3">
-                    {{ form.bio.label_tag }}
-                    {{ form.bio|add_class:"form-control"|attr:"rows:4" }}
-                    {% for error in form.bio.errors %}
-                    <div class="text-danger small">{{ error }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Save Button -->
-        <button type="submit" class="btn btn-primary w-100 mt-4">💾 Save Profile</button>
-    </form>
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Player setup</p>
+    <h1 class="h3 fw-bold mb-1">Update Player Profile</h1>
+    <p class="text-muted mb-0">Keep your football identity, stats, and media ready for scouts and clubs.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary icon-btn"><i class="bi bi-arrow-left"></i>Dashboard</a>
+    <a href="{% url 'scout_card' user.id %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-share"></i>Scout Card</a>
+  </div>
 </div>
 
-<style>
-form label {
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-form input, form select, form textarea {
-    border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 8px;
-}
-.nav-tabs .nav-link {
-    font-weight: 600;
-}
-.card {
-    background-color: #fff;
-}
-</style>
+<form method="post" enctype="multipart/form-data" class="card border-0">
+  {% csrf_token %}
+  <div class="card-body p-4">
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="row g-4">
+      <aside class="col-lg-4">
+        <div class="media-preview-card">
+          <img
+            id="playerProfilePreview"
+            src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% elif user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}"
+            class="media-preview-card__image"
+            alt="Player profile preview"
+          >
+          <div>
+            <h2 class="h5 fw-bold mb-1">Profile photo</h2>
+            <p class="text-muted small mb-0">Use a clear headshot or match photo. Square images display best across ScoutKE.</p>
+          </div>
+          <div>
+            {{ form.profile_picture|add_class:"form-control"|attr:"data-media-preview-input:playerProfilePreview" }}
+            {{ form.profile_picture.errors }}
+          </div>
+        </div>
+      </aside>
+
+      <div class="col-lg-8">
+        <ul class="nav nav-tabs mb-4" id="profileTab" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#personal" type="button">Personal</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#physical" type="button">Physical</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#football" type="button">Football</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#media" type="button">Media</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#bio" type="button">Bio</button></li>
+        </ul>
+
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="personal">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.full_name.label }}</label>
+                {{ form.full_name }}
+                {{ form.full_name.errors }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.age.label }}</label>
+                {{ form.age }}
+                {{ form.age.errors }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.nationality.label }}</label>
+                {{ form.nationality }}
+                {{ form.nationality.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.region.label }}</label>
+                {{ form.region }}
+                {{ form.region.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="physical">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">{{ form.height_cm.label }}</label>
+                {{ form.height_cm }}
+                {{ form.height_cm.errors }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.weight_kg.label }}</label>
+                {{ form.weight_kg }}
+                {{ form.weight_kg.errors }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.preferred_foot.label }}</label>
+                {{ form.preferred_foot }}
+                {{ form.preferred_foot.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="football">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.position.label }}</label>
+                {{ form.position }}
+                {{ form.position.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.current_club.label }}</label>
+                {{ form.current_club }}
+                {{ form.current_club.errors }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.jersey_number.label }}</label>
+                {{ form.jersey_number }}
+                {{ form.jersey_number.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="media">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">{{ form.highlight_video.label }}</label>
+                {{ form.highlight_video }}
+                {{ form.highlight_video.errors }}
+                <p class="text-muted small mt-2 mb-0">Paste a YouTube, Vimeo, or direct video link. Scouts see this on your profile and scout card.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="bio">
+            <label class="form-label">{{ form.bio.label }}</label>
+            {{ form.bio|attr:"rows:5" }}
+            {{ form.bio.errors }}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4 icon-btn"><i class="bi bi-save"></i>Save profile</button>
+      </div>
+    </div>
+  </div>
+</form>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    var activeTab = localStorage.getItem('activeTab');
-    if (activeTab) {
-        var tabTrigger = document.querySelector('#profileTab button[data-bs-target="' + activeTab + '"]');
-        if (tabTrigger) {
-            var tab = new bootstrap.Tab(tabTrigger);
-            tab.show();
-        }
+  var activeTab = localStorage.getItem("player-profile-tab");
+  if (activeTab) {
+    var tabTrigger = document.querySelector('#profileTab button[data-bs-target="' + activeTab + '"]');
+    if (tabTrigger) {
+      bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
     }
+  }
 
-    var tabs = document.querySelectorAll('#profileTab button');
-    tabs.forEach(function(tabBtn) {
-        tabBtn.addEventListener('shown.bs.tab', function(event) {
-            localStorage.setItem('activeTab', event.target.getAttribute('data-bs-target'));
-        });
+  document.querySelectorAll("#profileTab button").forEach(function(tabBtn) {
+    tabBtn.addEventListener("shown.bs.tab", function(event) {
+      localStorage.setItem("player-profile-tab", event.target.getAttribute("data-bs-target"));
     });
+  });
 });
 </script>
 {% endblock %}

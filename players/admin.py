@@ -1,6 +1,6 @@
 # players/admin.py
 from django.contrib import admin
-from .models import PlayerProfile
+from .models import PlayerProfile, ProfileView
 
 @admin.register(PlayerProfile)
 class PlayerProfileAdmin(admin.ModelAdmin):
@@ -30,3 +30,11 @@ class PlayerProfileAdmin(admin.ModelAdmin):
             "fields": ("bio", "updated_at")
         }),
     )
+
+
+@admin.register(ProfileView)
+class ProfileViewAdmin(admin.ModelAdmin):
+    list_display = ("player", "viewer", "view_count", "last_viewed_at")
+    list_filter = ("last_viewed_at", "viewer__role")
+    search_fields = ("player__user__username", "viewer__username")
+    readonly_fields = ("first_viewed_at", "last_viewed_at")

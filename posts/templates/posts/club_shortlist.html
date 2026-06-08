@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Club Shortlist - ScoutKE{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-kicker mb-1">Club pipeline</p>
+    <h1 class="h3 fw-bold mb-1">Club Shortlist</h1>
+    <p class="text-muted mb-0">Track recruitment leads from community sightings and scout reports.</p>
+  </div>
+  <a href="{% url 'talent_spots' %}" class="btn btn-outline-primary icon-btn"><i class="bi bi-search"></i>Find Talent</a>
+</div>
+
+<div class="row g-3">
+  {% for entry in entries %}
+    <div class="col-lg-6">
+      <article class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between gap-2 mb-2">
+            <div>
+              <h2 class="h5 fw-bold mb-1">
+                <a href="{% url 'talent_spot_detail' entry.talent_spot.id %}" class="text-decoration-none">{{ entry.talent_spot.prospect_name }}</a>
+              </h2>
+              <div class="text-muted small">{{ entry.talent_spot.location }} &middot; {{ entry.talent_spot.get_position_display }}</div>
+            </div>
+            <span class="badge text-bg-light border align-self-start">{{ entry.get_status_display }}</span>
+          </div>
+
+          <p>{{ entry.talent_spot.notes|truncatechars:160 }}</p>
+
+          <form method="post" action="{% url 'update_shortlist_entry' entry.id %}" class="border-top pt-3 mt-3">
+            {% csrf_token %}
+            <div class="mb-2">
+              <label class="form-label small">Pipeline status</label>
+              <select name="status" class="form-select form-select-sm">
+                {% for value,label in status_choices %}
+                  <option value="{{ value }}" {% if entry.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Private notes</label>
+              <textarea name="private_notes" class="form-control" rows="3">{{ entry.private_notes }}</textarea>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Updated {{ entry.updated_at|naturaltime }}</span>
+              <div class="d-flex gap-2">
+                {% if entry.talent_spot.linked_player %}
+                  <a href="{% url 'create_contact_request' entry.talent_spot.id %}" class="btn btn-sm btn-outline-success icon-btn"><i class="bi bi-envelope"></i>Contact</a>
+                {% endif %}
+                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </article>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="surface-panel text-center p-4">
+        <h2 class="h5">No shortlisted prospects yet</h2>
+        <p class="text-muted mb-3">Start from Talent Spots and save promising leads into your recruitment pipeline.</p>
+        <a href="{% url 'talent_spots' %}" class="btn btn-primary icon-btn"><i class="bi bi-crosshair"></i>Browse Talent Spots</a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
