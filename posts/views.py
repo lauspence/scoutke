@@ -86,6 +86,9 @@ def feed(request):
 @login_required
 def like_post(request, post_id):
     """AJAX: toggle like/unlike."""
+    if request.method != "POST":
+        return redirect(request.META.get("HTTP_REFERER", "feed"))
+
     post = get_object_or_404(Post, id=post_id)
     user = request.user
 
@@ -144,6 +147,9 @@ def add_comment(request, post_id):
 @login_required
 def repost_post(request, post_id):
     """Create a repost once per user/post."""
+    if request.method != "POST":
+        return redirect("scout_dashboard" if request.user.role == "scout" else "feed")
+
     original = get_object_or_404(Post, id=post_id)
     _, created = repost_post_for_user(request.user, original)
 
