@@ -1,5 +1,3 @@
-import mimetypes
-
 import requests
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -25,26 +23,25 @@ class VercelBlobStorage(Storage):
 
     def _save(self, name, content):
         content.seek(0)
-        content_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
-        blob.put(
+        result = blob.put(
             pathname=name,
             body=content.read(),
-            options={"addRandomSuffix": False, "contentType": content_type},
+            options={"no_suffix": True},
         )
-        return name
+        return result.get("pathname", name)
 
     def delete(self, name):
-        blob.delete(self._blob_url(name))
+        blob.delete(self._blob_url(name), options={})
 
     def exists(self, name):
         try:
-            blob.head(self._blob_url(name))
+            blob.head(self._blob_url(name), options={})
             return True
         except Exception:
             return False
 
     def size(self, name):
-        return blob.head(self._blob_url(name))["size"]
+        return blob.head(self._blob_url(name), options={})["size"]
 
     def url(self, name):
         return self._blob_url(name)
