@@ -83,6 +83,10 @@ document.addEventListener("DOMContentLoaded", function() {
       .then(res => res.json())
       .then(data => {
         document.getElementById("likes-count-" + postId).textContent = data.total_likes;
+        likeButton.classList.toggle("is-active", data.liked);
+        const icon = likeButton.querySelector("i");
+        icon.classList.toggle("bi-hand-thumbs-up", !data.liked);
+        icon.classList.toggle("bi-hand-thumbs-up-fill", data.liked);
       });
     }
   });

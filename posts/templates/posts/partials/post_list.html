@@ -56,27 +56,29 @@
         {% endif %}
       {% endif %}
 
-      <div class="post-actions text-muted border-top pt-3">
+      <div class="post-actions border-top pt-3">
         {% if user.is_authenticated %}
           <div class="post-action-group">
-            <a href="#" class="text-decoration-none icon-btn like-btn" data-id="{{ post.id }}">
-              <i class="bi bi-hand-thumbs-up"></i>Like (<span id="likes-count-{{ post.id }}">{{ post.total_likes }}</span>)
+            <a href="#" class="action-btn like-btn {% if user in post.likes.all %}is-active{% endif %}" data-id="{{ post.id }}">
+              <i class="bi {% if user in post.likes.all %}bi-hand-thumbs-up-fill{% else %}bi-hand-thumbs-up{% endif %}"></i>
+              <span id="likes-count-{{ post.id }}">{{ post.total_likes }}</span>
             </a>
-            <a class="text-decoration-none icon-btn" data-bs-toggle="collapse" href="#comments-{{ post.id }}">
-              <i class="bi bi-chat-left-text"></i>Comment (<span id="comments-count-{{ post.id }}">{{ post.comments.count }}</span>)
+            <a class="action-btn" data-bs-toggle="collapse" href="#comments-{{ post.id }}">
+              <i class="bi bi-chat-left-text"></i>
+              <span id="comments-count-{{ post.id }}">{{ post.comments.count }}</span>
             </a>
             <form action="{% url 'repost_post' post.id %}" method="POST">
               {% csrf_token %}
-              <button type="submit" class="btn btn-link p-0 icon-btn text-muted"><i class="bi bi-repeat"></i>Repost</button>
+              <button type="submit" class="action-btn"><i class="bi bi-repeat"></i><span class="d-none d-sm-inline">Repost</span></button>
             </form>
           </div>
-          <a href="{% url 'report_post' post.id %}" class="text-decoration-none icon-btn text-muted">
-            <i class="bi bi-flag"></i>Report
+          <a href="{% url 'report_post' post.id %}" class="action-btn action-btn--muted" aria-label="Report post">
+            <i class="bi bi-flag"></i>
           </a>
         {% else %}
           <div class="post-action-group">
-            <a href="{% url 'login' %}" class="text-decoration-none">Like ({{ post.total_likes }})</a>
-            <a href="{% url 'login' %}" class="text-decoration-none">Comment ({{ post.comments.count }})</a>
+            <a href="{% url 'login' %}" class="action-btn"><i class="bi bi-hand-thumbs-up"></i><span>{{ post.total_likes }}</span></a>
+            <a href="{% url 'login' %}" class="action-btn"><i class="bi bi-chat-left-text"></i><span>{{ post.comments.count }}</span></a>
           </div>
         {% endif %}
       </div>
